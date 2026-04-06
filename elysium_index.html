@@ -1,0 +1,910 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width,initial-scale=1,maximum-scale=1,user-scalable=no,viewport-fit=cover">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<meta name="apple-mobile-web-app-title" content="Elysium">
+<meta name="theme-color" content="#050510" id="theme-meta">
+<link rel="manifest" href="manifest.webmanifest">
+<link rel="apple-touch-icon" href="icon.svg">
+<title>Elysium Bot</title>
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;900&family=Rajdhani:wght@300;400;600&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<style>
+/* ===== THEMES ===== */
+[data-theme="cosmos"] {
+  --bg0:#050510;--bg1:#0a0a1a;--bg2:#0f0f25;--bg3:#141430;
+  --accent:#4fc3f7;--accent2:#7c4dff;--accent3:#e040fb;
+  --gold:#ffd700;--danger:#ff4444;--ok:#00e676;
+  --text:#e8eaf6;--muted:#5c6bc0;--border:rgba(79,195,247,0.15);
+  --glow:rgba(79,195,247,0.3);--font-display:'Orbitron';--font-body:'Rajdhani';
+}
+[data-theme="ember"] {
+  --bg0:#0d0500;--bg1:#180a00;--bg2:#221000;--bg3:#2c1500;
+  --accent:#ff6d00;--accent2:#ff9100;--accent3:#ffea00;
+  --gold:#ffd700;--danger:#ff1744;--ok:#76ff03;
+  --text:#fff8e1;--muted:#8d6e63;--border:rgba(255,109,0,0.2);
+  --glow:rgba(255,109,0,0.35);--font-display:'Cinzel';--font-body:'Rajdhani';
+}
+[data-theme="void"] {
+  --bg0:#000000;--bg1:#080808;--bg2:#101010;--bg3:#181818;
+  --accent:#e0e0e0;--accent2:#9e9e9e;--accent3:#616161;
+  --gold:#fafafa;--danger:#ef5350;--ok:#66bb6a;
+  --text:#eeeeee;--muted:#616161;--border:rgba(224,224,224,0.1);
+  --glow:rgba(255,255,255,0.15);--font-display:'Cinzel';--font-body:'Rajdhani';
+}
+
+/* ===== RESET ===== */
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
+html,body{height:100%;background:var(--bg0);color:var(--text);font-family:var(--font-body),'Rajdhani',sans-serif;overflow:hidden;transition:background 0.5s}
+
+/* ===== PARTICLES ===== */
+#particles{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
+.particle{position:absolute;border-radius:50%;animation:float linear infinite;opacity:0}
+@keyframes float{0%{transform:translateY(100vh) scale(0);opacity:0}10%{opacity:1}90%{opacity:0.5}100%{transform:translateY(-10vh) scale(1.5);opacity:0}}
+
+/* ===== SPLASH ===== */
+#splash{position:fixed;inset:0;background:var(--bg0);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.8s}
+.splash-ring{width:120px;height:120px;border-radius:50%;border:1px solid var(--accent);position:relative;animation:spin 4s linear infinite}
+.splash-ring::before{content:'';position:absolute;inset:8px;border-radius:50%;border:1px solid var(--accent2);animation:spin 2s linear infinite reverse}
+.splash-ring::after{content:'E';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:48px;font-weight:900;color:var(--accent);text-shadow:0 0 20px var(--glow)}
+@keyframes spin{to{transform:rotate(360deg)}}
+.splash-title{font-family:var(--font-display);font-size:22px;font-weight:900;letter-spacing:6px;color:var(--accent);margin-top:24px;text-shadow:0 0 20px var(--glow)}
+.splash-sub{font-size:11px;color:var(--muted);letter-spacing:4px;margin-top:8px}
+.splash-bar{width:200px;height:2px;background:var(--bg3);border-radius:1px;margin-top:24px;overflow:hidden}
+.splash-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));animation:load 1.8s ease-out forwards}
+@keyframes load{from{width:0}to{width:100%}}
+
+/* ===== APP ===== */
+#app{height:100vh;height:100dvh;display:flex;flex-direction:column;position:relative;z-index:1;opacity:0;transition:opacity 0.5s}
+#app.visible{opacity:1}
+
+/* ===== HEADER ===== */
+.header{padding:env(safe-area-inset-top,12px) 16px 12px;background:var(--bg1);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-shrink:0;position:relative}
+.header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),var(--accent2),transparent)}
+.header-logo{font-family:var(--font-display);font-size:20px;font-weight:900;letter-spacing:3px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.header-time{font-family:var(--font-display);font-size:13px;color:var(--muted);letter-spacing:2px;flex:1;text-align:center}
+.header-btns{display:flex;gap:8px}
+.hbtn{width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--bg2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;transition:all 0.2s}
+.hbtn:active{transform:scale(0.9)}
+.hbtn.playing{border-color:var(--accent);box-shadow:0 0 12px var(--glow)}
+
+/* ===== TABS ===== */
+.tabs{display:flex;background:var(--bg1);border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;scrollbar-width:none;padding:0 4px}
+.tabs::-webkit-scrollbar{display:none}
+.tab{flex:1;min-width:60px;padding:10px 4px;font-family:var(--font-display);font-size:8px;letter-spacing:1.5px;text-transform:uppercase;text-align:center;cursor:pointer;color:var(--muted);border:none;background:none;border-bottom:2px solid transparent;transition:all 0.2s;white-space:nowrap}
+.tab.active{color:var(--accent);border-bottom-color:var(--accent);text-shadow:0 0 8px var(--glow)}
+
+/* ===== CONTENT ===== */
+.content{flex:1;overflow-y:auto;padding:14px 14px calc(14px + env(safe-area-inset-bottom));scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+
+/* ===== CARDS ===== */
+.card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:10px;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:0.5}
+.card-label{font-family:var(--font-display);font-size:8px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.card-label::after{content:'';flex:1;height:1px;background:var(--border)}
+
+/* ===== COUNTDOWN ===== */
+.cd-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
+.cd-box{background:var(--bg3);border-radius:10px;padding:10px 4px;text-align:center;border:1px solid var(--border);position:relative;overflow:hidden}
+.cd-box::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--glow) 0%,transparent 60%);opacity:0.2}
+.cd-num{font-family:var(--font-display);font-size:28px;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
+.cd-label{font-size:8px;color:var(--muted);letter-spacing:2px;margin-top:3px}
+
+/* ===== PROGRESS ===== */
+.prog-wrap{margin:10px 0 4px}
+.prog-row{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:6px}
+.prog-bar{height:3px;background:var(--bg3);border-radius:2px;overflow:hidden}
+.prog-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent3));border-radius:2px;transition:width 1.5s cubic-bezier(0.4,0,0.2,1);position:relative}
+.prog-fill::after{content:'';position:absolute;right:0;top:-2px;width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--glow)}
+
+/* ===== STATS ===== */
+.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
+.stat-box{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px 8px;text-align:center}
+.stat-num{font-family:var(--font-display);font-size:26px;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
+.stat-lbl{font-size:8px;color:var(--muted);letter-spacing:2px;margin-top:2px}
+
+/* ===== TASKS ===== */
+.task{display:flex;align-items:flex-start;gap:10px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,0.04);cursor:pointer;transition:opacity 0.3s}
+.task:last-child{border-bottom:none}
+.task.done{opacity:0.4}
+.task-chk{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--border);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all 0.25s;background:var(--bg3)}
+.task.done .task-chk{background:var(--ok);border-color:var(--ok)}
+.task.done .task-chk::after{content:'✓';font-size:12px;color:#000;font-weight:bold}
+.task-body{flex:1;min-width:0}
+.task-title{font-size:13px;color:var(--text);line-height:1.4;font-weight:600}
+.task.done .task-title{text-decoration:line-through;color:var(--muted)}
+.task-sub{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.5}
+.badge{font-size:8px;padding:3px 8px;border-radius:4px;letter-spacing:1px;flex-shrink:0;font-family:var(--font-display)}
+.b-fire{background:rgba(255,68,68,0.12);color:var(--danger);border:1px solid rgba(255,68,68,0.2)}
+.b-amber{background:rgba(255,160,0,0.1);color:#ffa000;border:1px solid rgba(255,160,0,0.2)}
+.b-green{background:rgba(0,230,118,0.08);color:var(--ok);border:1px solid rgba(0,230,118,0.15)}
+.b-gray{background:rgba(100,100,100,0.1);color:var(--muted);border:1px solid var(--border)}
+
+/* ===== SECTION HEADER ===== */
+.sh{font-family:var(--font-display);font-size:9px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;margin:14px 0 8px;display:flex;align-items:center;gap:8px}
+.sh::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+
+/* ===== DAILY PLAN ===== */
+.plan-row{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);position:relative}
+.plan-row:last-child{border-bottom:none}
+.plan-time{font-family:var(--font-display);font-size:11px;color:var(--accent);width:44px;flex-shrink:0;padding-top:2px}
+.plan-line{display:flex;flex-direction:column;align-items:center;gap:0;margin-top:4px}
+.plan-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;border:1.5px solid var(--accent)}
+.plan-vline{width:1px;flex:1;min-height:20px;background:var(--border);margin-top:3px}
+.plan-content{flex:1}
+.plan-title{font-size:13px;color:var(--text);font-weight:600;line-height:1.4}
+.plan-sub{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.5}
+.plan-row.highlight{background:rgba(79,195,247,0.04);margin:0 -16px;padding:10px 16px;border-radius:8px}
+.plan-row.highlight .plan-time{color:var(--accent)}
+.plan-row.highlight .plan-dot{background:var(--accent);box-shadow:0 0 8px var(--glow)}
+
+/* ===== PROFILE ===== */
+.prof-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+.prof-row:last-child{border-bottom:none}
+.prof-key{font-size:9px;color:var(--muted);letter-spacing:2px;font-family:var(--font-display)}
+.prof-val{font-size:12px;color:var(--text);text-align:right;max-width:58%;line-height:1.4;font-weight:600}
+.prof-val.hi{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+
+/* ===== THEME PICKER ===== */
+.theme-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px}
+.theme-btn{border-radius:10px;padding:12px 8px;border:1.5px solid transparent;cursor:pointer;text-align:center;transition:all 0.2s;background:var(--bg3)}
+.theme-btn.active{border-color:var(--accent);box-shadow:0 0 12px var(--glow)}
+.theme-dot{width:24px;height:24px;border-radius:50%;margin:0 auto 6px;display:block}
+.theme-name{font-family:var(--font-display);font-size:9px;letter-spacing:2px;color:var(--text)}
+
+/* ===== ALARM MODAL ===== */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:500;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity 0.3s;backdrop-filter:blur(4px)}
+.overlay.open{opacity:1;pointer-events:all}
+.sheet{width:100%;background:var(--bg1);border-radius:20px 20px 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom));border-top:1px solid var(--border);transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);max-height:85vh;overflow-y:auto}
+.sheet::before{content:'';display:block;width:36px;height:3px;background:var(--border);border-radius:2px;margin:0 auto 16px}
+.overlay.open .sheet{transform:translateY(0)}
+.sheet-title{font-family:var(--font-display);font-size:16px;font-weight:900;letter-spacing:3px;color:var(--accent);margin-bottom:16px}
+.alarm-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
+.alarm-row:last-of-type{border-bottom:none}
+.alarm-info{flex:1}
+.alarm-time{font-family:var(--font-display);font-size:26px;font-weight:900;color:var(--text);line-height:1}
+.alarm-desc{font-size:10px;color:var(--muted);margin-top:2px;letter-spacing:1px}
+.toggle-wrap{flex-shrink:0}
+.toggle{width:46px;height:26px;background:var(--bg3);border-radius:13px;position:relative;cursor:pointer;transition:background 0.25s;border:1px solid var(--border)}
+.toggle.on{background:var(--accent);border-color:var(--accent)}
+.toggle::after{content:'';position:absolute;width:20px;height:20px;background:white;border-radius:50%;top:2px;left:2px;transition:transform 0.25s;box-shadow:0 1px 4px rgba(0,0,0,0.3)}
+.toggle.on::after{transform:translateX(20px)}
+.sheet-close{width:100%;padding:13px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--muted);font-family:var(--font-display);font-size:10px;cursor:pointer;margin-top:14px;letter-spacing:2px}
+
+/* ===== MUSIC BAR ===== */
+.music-bar{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px;margin-bottom:10px}
+.music-icon{font-size:20px;animation:rotate 4s linear infinite paused}
+.music-icon.playing{animation-play-state:running}
+@keyframes rotate{to{transform:rotate(360deg)}}
+.music-info{flex:1}
+.music-title{font-size:12px;color:var(--text);font-weight:600}
+.music-artist{font-size:10px;color:var(--muted);margin-top:1px}
+.music-btn{width:36px;height:36px;border-radius:50%;border:1px solid var(--accent);background:transparent;color:var(--accent);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
+.music-btn:active{background:var(--accent);color:var(--bg0)}
+.music-wave{display:flex;align-items:center;gap:2px;height:20px}
+.bar-wave{width:3px;border-radius:2px;background:var(--accent);animation:wave 0.8s ease-in-out infinite alternate}
+.bar-wave:nth-child(1){height:6px;animation-delay:0s}
+.bar-wave:nth-child(2){height:14px;animation-delay:0.1s}
+.bar-wave:nth-child(3){height:10px;animation-delay:0.2s}
+.bar-wave:nth-child(4){height:18px;animation-delay:0.15s}
+.bar-wave:nth-child(5){height:8px;animation-delay:0.05s}
+@keyframes wave{to{transform:scaleY(0.3)}}
+.music-wave.paused .bar-wave{animation-play-state:paused}
+
+/* ===== TODAY CARD ===== */
+.today-card{background:linear-gradient(135deg,var(--bg2),var(--bg3));border:1px solid var(--accent);border-radius:14px;padding:14px 16px;margin-bottom:10px;position:relative;overflow:hidden}
+.today-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--glow),transparent);opacity:0.1}
+.today-top{font-family:var(--font-display);font-size:8px;letter-spacing:3px;color:var(--accent);margin-bottom:8px}
+.today-main{font-size:14px;color:var(--text);line-height:1.6;font-weight:600}
+.today-next{font-size:10px;color:var(--muted);margin-top:8px}
+
+/* ===== ANIMATIONS ===== */
+@keyframes ring{0%,100%{transform:rotate(0)}15%{transform:rotate(-20deg)}30%{transform:rotate(20deg)}45%{transform:rotate(-15deg)}60%{transform:rotate(15deg)}75%{transform:rotate(-5deg)}}
+.ringing{animation:ring 0.7s ease-in-out}
+@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
+.fade-in{animation:fadeIn 0.3s ease-out}
+
+/* ===== ENERGY BARS ===== */
+.energy-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.energy-label{font-size:9px;color:var(--muted);width:38px;font-family:var(--font-display);letter-spacing:1px}
+.energy-bar{flex:1;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden}
+.energy-fill{height:100%;border-radius:2px;position:relative}
+
+/* ===== SCROLLBAR ===== */
+::-webkit-scrollbar{width:3px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+</style>
+</head>
+<body data-theme="cosmos">
+
+<!-- PARTICLES -->
+<div id="particles"></div>
+
+<!-- SPLASH -->
+<div id="splash">
+  <div class="splash-ring"></div>
+  <div class="splash-title">ELYSIUM</div>
+  <div class="splash-sub">PERSONAL AI · YAKUP EKİNCİ</div>
+  <div class="splash-bar"><div class="splash-bar-fill"></div></div>
+</div>
+
+<!-- APP -->
+<div id="app">
+  <div class="header">
+    <div class="header-logo">ELYSIUM</div>
+    <div class="header-time" id="live-time">--:--:--</div>
+    <div class="header-btns">
+      <button class="hbtn" id="music-hbtn" onclick="toggleMusic()" title="Müzik">🎵</button>
+      <button class="hbtn" id="alarm-hbtn" onclick="openSheet('alarm-sheet')">🔔</button>
+    </div>
+  </div>
+
+  <div class="tabs">
+    <button class="tab active" onclick="showTab('home',this)">ANA</button>
+    <button class="tab" onclick="showTab('plan',this)">GÜNLÜK</button>
+    <button class="tab" onclick="showTab('tasks',this)">GÖREV</button>
+    <button class="tab" onclick="showTab('profile',this)">PROFİL</button>
+    <button class="tab" onclick="showTab('settings',this)">AYAR</button>
+  </div>
+
+  <div class="content" id="content">
+
+    <!-- HOME -->
+    <div id="tab-home" class="fade-in">
+      <div class="music-bar" id="music-bar">
+        <div class="music-icon" id="music-icon">💿</div>
+        <div class="music-info">
+          <div class="music-title">Stay — Hans Zimmer</div>
+          <div class="music-artist">Interstellar OST</div>
+        </div>
+        <div class="music-wave paused" id="music-wave">
+          <div class="bar-wave"></div><div class="bar-wave"></div><div class="bar-wave"></div>
+          <div class="bar-wave"></div><div class="bar-wave"></div>
+        </div>
+        <button class="music-btn" onclick="toggleMusic()">▶</button>
+      </div>
+
+      <div class="card">
+        <div class="card-label">ALES'E KALAN SÜRE · 10 MAYIS 2026</div>
+        <div class="cd-grid" id="cd-ales"></div>
+        <div class="prog-wrap">
+          <div class="prog-row"><span>Hazırlık</span><span id="prog-pct">0%</span></div>
+          <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+        </div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">ASKERLİK TECİLİ · 31 TEMMUZ 2026</div>
+        <div class="cd-grid" id="cd-tecil"></div>
+      </div>
+
+      <div class="stats-row" id="stats-row">
+        <div class="stat-box"><div class="stat-num" id="st-total">12</div><div class="stat-lbl">TOPLAM</div></div>
+        <div class="stat-box"><div class="stat-num" id="st-done" style="color:var(--ok)">0</div><div class="stat-lbl">BİTTİ</div></div>
+        <div class="stat-box"><div class="stat-num" style="color:var(--danger)">3</div><div class="stat-lbl">ACİL</div></div>
+      </div>
+
+      <div class="today-card">
+        <div class="today-top">🔥 BUGÜNÜN ODAĞI</div>
+        <div class="today-main">Red Fish iOS review takip et.<br>1 gameplay videosu çek + yükle.</div>
+        <div class="today-next">Yarın → LinkedIn ilk gönderi &nbsp;·&nbsp; Öbür gün → Reddit</div>
+      </div>
+
+      <div class="card">
+        <div class="card-label">ENERJİ HARİTASI</div>
+        <div class="energy-row">
+          <div class="energy-label">09-12</div>
+          <div class="energy-bar"><div class="energy-fill" style="width:35%;background:var(--muted)"></div></div>
+          <div style="font-size:9px;color:var(--muted);width:20px;text-align:right">35%</div>
+        </div>
+        <div class="energy-row">
+          <div class="energy-label">12-13</div>
+          <div class="energy-bar"><div class="energy-fill" style="width:60%;background:#ffa000"></div></div>
+          <div style="font-size:9px;color:#ffa000;width:20px;text-align:right">60%</div>
+        </div>
+        <div class="energy-row">
+          <div class="energy-label" style="color:var(--accent)">13-17</div>
+          <div class="energy-bar"><div class="energy-fill" style="width:95%;background:linear-gradient(90deg,var(--accent),var(--accent2))"></div></div>
+          <div style="font-size:9px;color:var(--accent);width:20px;text-align:right">95%</div>
+        </div>
+        <div class="energy-row" style="margin-bottom:0">
+          <div class="energy-label">17-23</div>
+          <div class="energy-bar"><div class="energy-fill" style="width:55%;background:var(--ok)"></div></div>
+          <div style="font-size:9px;color:var(--ok);width:20px;text-align:right">55%</div>
+        </div>
+      </div>
+    </div>
+
+    <!-- DAILY PLAN -->
+    <div id="tab-plan" style="display:none">
+      <div class="card">
+        <div class="card-label">GÜNLÜK PLAN</div>
+        <div id="plan-list"></div>
+      </div>
+    </div>
+
+    <!-- TASKS -->
+    <div id="tab-tasks" style="display:none">
+      <div class="sh">🔥 Acil — Bu Hafta</div>
+      <div class="card" id="tasks-fire"></div>
+      <div class="sh">⚡ Bu Ay</div>
+      <div class="card" id="tasks-month"></div>
+      <div class="sh">📅 1-3 Ay</div>
+      <div class="card" id="tasks-later"></div>
+      <div class="sh">💤 Donduruldu</div>
+      <div class="card" id="tasks-frozen"></div>
+    </div>
+
+    <!-- PROFILE -->
+    <div id="tab-profile" style="display:none">
+      <div class="card">
+        <div class="card-label">KİMLİK</div>
+        <div class="prof-row"><div class="prof-key">AD</div><div class="prof-val hi">Yakup Ekinci</div></div>
+        <div class="prof-row"><div class="prof-key">KONUM</div><div class="prof-val">Dikili, İzmir</div></div>
+        <div class="prof-row"><div class="prof-key">MESLEK</div><div class="prof-val">Unity Game Developer</div></div>
+        <div class="prof-row"><div class="prof-key">STÜDYO</div><div class="prof-val">Arxes Studios</div></div>
+        <div class="prof-row"><div class="prof-key">DOĞUM</div><div class="prof-val">10.02.2000 · 26 yaş</div></div>
+      </div>
+      <div class="card">
+        <div class="card-label">KRİTİK TARİHLER</div>
+        <div class="prof-row"><div class="prof-key">ALES/1 SINAV</div><div class="prof-val hi">10 Mayıs 2026</div></div>
+        <div class="prof-row"><div class="prof-key">ALES SONUÇ</div><div class="prof-val">5 Haziran 2026</div></div>
+        <div class="prof-row"><div class="prof-key">YL BAŞVURU</div><div class="prof-val">Haziran sonu</div></div>
+        <div class="prof-row"><div class="prof-key">TECİL BİTİŞ</div><div class="prof-val hi">31 Temmuz 2026</div></div>
+        <div class="prof-row"><div class="prof-key">ALES HEDEFİ</div><div class="prof-val">SAY 70+ (İYTE / Ege)</div></div>
+      </div>
+      <div class="card">
+        <div class="card-label">OYUN PORTFÖYÜ</div>
+        <div class="prof-row"><div class="prof-key">RED FISH</div><div class="prof-val hi">iOS Review + Android Live</div></div>
+        <div class="prof-row"><div class="prof-key">SATRANÇ / TAVLA</div><div class="prof-val">Geliştirmede</div></div>
+        <div class="prof-row"><div class="prof-key">ROBLOX</div><div class="prof-val" style="color:var(--muted)">Donduruldu</div></div>
+        <div class="prof-row"><div class="prof-key">STEAM</div><div class="prof-val" style="color:var(--muted)">Donduruldu</div></div>
+      </div>
+      <div class="card">
+        <div class="card-label">HEDEFLER</div>
+        <div class="prof-row"><div class="prof-key">KISA</div><div class="prof-val">iOS çıkış, sosyal medya</div></div>
+        <div class="prof-row"><div class="prof-key">ORTA</div><div class="prof-val">Yurt dışı iş — Almanya</div></div>
+        <div class="prof-row"><div class="prof-key">UZUN</div><div class="prof-val">Bağımsız gelir</div></div>
+        <div class="prof-row"><div class="prof-key">İNGİLİZCE</div><div class="prof-val">B2 → C1</div></div>
+      </div>
+    </div>
+
+    <!-- SETTINGS -->
+    <div id="tab-settings" style="display:none">
+      <div class="card">
+        <div class="card-label">TEMA</div>
+        <div class="theme-row">
+          <div class="theme-btn active" id="th-cosmos" onclick="setTheme('cosmos')">
+            <div class="theme-dot" style="background:linear-gradient(135deg,#4fc3f7,#7c4dff)"></div>
+            <div class="theme-name">COSMOS</div>
+          </div>
+          <div class="theme-btn" id="th-ember" onclick="setTheme('ember')">
+            <div class="theme-dot" style="background:linear-gradient(135deg,#ff6d00,#ffea00)"></div>
+            <div class="theme-name">EMBER</div>
+          </div>
+          <div class="theme-btn" id="th-void" onclick="setTheme('void')">
+            <div class="theme-dot" style="background:linear-gradient(135deg,#e0e0e0,#424242)"></div>
+            <div class="theme-name">VOID</div>
+          </div>
+        </div>
+      </div>
+      <div class="card">
+        <div class="card-label">BİLDİRİMLER</div>
+        <div class="prof-row">
+          <div class="prof-key">İZİN DURUMU</div>
+          <div class="prof-val" id="notif-status">—</div>
+        </div>
+        <button onclick="requestNotif()" style="width:100%;padding:11px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--accent);font-family:var(--font-display);font-size:10px;letter-spacing:2px;cursor:pointer;margin-top:8px">BİLDİRİM İZNİ AL</button>
+      </div>
+      <div class="card">
+        <div class="card-label">GÖREVLERİ SIFIRLA</div>
+        <button onclick="resetTasks()" style="width:100%;padding:11px;background:rgba(255,68,68,0.08);border:1px solid rgba(255,68,68,0.2);border-radius:8px;color:var(--danger);font-family:var(--font-display);font-size:10px;letter-spacing:2px;cursor:pointer">TÜM GÖREVLERİ SIFIRLA</button>
+      </div>
+      <div class="card">
+        <div class="card-label">HAKKINDA</div>
+        <div class="prof-row"><div class="prof-key">VERSİYON</div><div class="prof-val">2.0.0</div></div>
+        <div class="prof-row"><div class="prof-key">YAPAN</div><div class="prof-val hi">Elysium Bot</div></div>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- ALARM SHEET -->
+<div class="overlay" id="alarm-sheet" onclick="closeSheetOutside(event,'alarm-sheet')">
+  <div class="sheet">
+    <div class="sheet-title">⏰ ALARMLAR</div>
+    <div id="alarm-list-dom"></div>
+    <button class="sheet-close" onclick="closeSheet('alarm-sheet')">KAPAT</button>
+  </div>
+</div>
+
+<script>
+// ======== DATA ========
+const ALARMS_DATA = [
+  {id:0,time:'09:00',desc:'SABAH BAŞLANGIÇ',on:true},
+  {id:1,time:'13:00',desc:'ANA ÇALIŞMA BLOĞU',on:true},
+  {id:2,time:'18:00',desc:'YÜRÜYÜŞ / HAREKET',on:true},
+  {id:3,time:'19:00',desc:'ALES ÇALIŞMA',on:true},
+  {id:4,time:'23:00',desc:'EKRANI KAPAT',on:false},
+];
+
+const PLAN_DATA = [
+  {time:'08:30',title:'Uyan, yüzünü yıka, su iç',sub:'Telefona bakma — 10 dk hareket et',color:'#66bb6a',highlight:false},
+  {time:'09:00',title:'Kahvaltı + günün tek önceliğini belirle',sub:'1 şey seç — bugün ne bitti sayılır?',color:'#ffa000',highlight:false},
+  {time:'09:30',title:'Hafif iş / mail / araştırma',sub:'Isınma modu — derin iş değil',color:'#78909c',highlight:false},
+  {time:'13:00',title:'🔥 ANA ÇALIŞMA BLOĞU',sub:'Derin iş, geliştirme, içerik üretimi — asıl sprint burası',color:'',highlight:true},
+  {time:'17:00',title:'Sosyal medya (20 dk)',sub:'Paylaşım yap, sürüklenme',color:'#ffa000',highlight:false},
+  {time:'18:00',title:'Yürüyüş / hareket',sub:'30 dk dışarı çık — pazarlık yok',color:'#66bb6a',highlight:false},
+  {time:'19:00',title:'ALES çalışma (60-90 dk)',sub:'SAY konuları + soru çöz. Haftada 5 gün.',color:'#4fc3f7',highlight:false},
+  {time:'20:00',title:'Yemek + dinlenme',sub:'Arkadaşlar, oyun — ama 23:00 cap koy',color:'#66bb6a',highlight:false},
+  {time:'23:00',title:'Ekranı kapat, günü kapat',sub:'Yarın 3 madde yaz, yat',color:'#78909c',highlight:false},
+];
+
+const TASKS_DATA = {
+  fire:[
+    {id:'t1',title:'Red Fish iOS App Store onayı',sub:'Waiting for Review. Reddi varsa anında müdahale et.'},
+    {id:'t2',title:'Sosyal medya içerik makinesi kur',sub:'3 Shorts/Reel hazırla. iOS çıkış videosu.'},
+    {id:'t3',title:'LinkedIn + Reddit aktif et',sub:'İlk gönderi + r/indiegaming paylaşımı'},
+  ],
+  month:[
+    {id:'t4',title:'Satranç / Tavla web + store\'a al',sub:'Siteye göm, Playstore + Appstore\'a yükle'},
+    {id:'t5',title:'Red Fish oyun içi IAP ekle',sub:'Basit coin pack — geliri 2-3x artırır'},
+    {id:'t6',title:'Arxes Studios sitesi güzelleştir',sub:'Demo oyunlar gömülsün, blog profesyonelleşsin'},
+    {id:'t7',title:'ALES çalışma — günde 1.5 saat',sub:'10 Mayıs sınav. Hedef: SAY 70+'},
+  ],
+  later:[
+    {id:'t8',title:'YouTube kanalı büyüt',sub:'Haftada 2 Shorts minimum. Indie dev nişi.'},
+    {id:'t9',title:'İngilizce B2 → C1',sub:'Almanya hedefi için kritik. İçeriği İngilizce yap.'},
+    {id:'t10',title:'Roblox projesini değerlendir',sub:'Bitir ya da dondur. Arada bırakma.'},
+  ],
+  frozen:[
+    {id:'t11',title:'Steam oyunu (kanca mekaniği)',sub:'Heves kaçtı. IAP oturduğunda bak.'},
+    {id:'t12',title:'Metaverse / otel simülasyon',sub:'Uzun vadeli vizyon. Şimdi çok erken.'},
+  ]
+};
+
+// ======== STORAGE ========
+function saveData(key, val) { try { localStorage.setItem('elysium_'+key, JSON.stringify(val)); } catch(e){} }
+function loadData(key, def) { try { const v = localStorage.getItem('elysium_'+key); return v ? JSON.parse(v) : def; } catch(e){ return def; } }
+
+let doneTasks = loadData('done', {});
+let alarmState = loadData('alarms', null);
+let currentTheme = loadData('theme', 'cosmos');
+
+if (alarmState) {
+  alarmState.forEach((on, i) => { if (ALARMS_DATA[i]) ALARMS_DATA[i].on = on; });
+}
+
+// ======== INIT ========
+window.addEventListener('load', () => {
+  // Apply saved theme
+  setTheme(currentTheme, false);
+
+  // Particles
+  spawnParticles();
+
+  // Splash
+  setTimeout(() => {
+    document.getElementById('splash').style.opacity = '0';
+    setTimeout(() => {
+      document.getElementById('splash').style.display = 'none';
+      document.getElementById('app').classList.add('visible');
+    }, 800);
+  }, 2000);
+
+  // SW
+  if ('serviceWorker' in navigator) {
+    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+  }
+
+  // Timers
+  updateClock();
+  setInterval(updateClock, 1000);
+  updateCountdowns();
+  setInterval(updateCountdowns, 1000);
+
+  // Alarm check
+  checkAlarms();
+  setInterval(checkAlarms, 15000);
+
+  // Render
+  renderPlan();
+  renderTasks();
+  renderAlarms();
+  updateStats();
+  updateNotifStatus();
+});
+
+// ======== PARTICLES ========
+function spawnParticles() {
+  const container = document.getElementById('particles');
+  for (let i = 0; i < 20; i++) {
+    const p = document.createElement('div');
+    p.className = 'particle';
+    const size = Math.random() * 3 + 1;
+    p.style.cssText = `
+      width:${size}px;height:${size}px;
+      left:${Math.random()*100}%;
+      background:var(--accent);
+      animation-duration:${Math.random()*20+15}s;
+      animation-delay:${Math.random()*20}s;
+      opacity:0;
+    `;
+    container.appendChild(p);
+  }
+}
+
+// ======== CLOCK ========
+function updateClock() {
+  const n = new Date();
+  document.getElementById('live-time').textContent =
+    [n.getHours(),n.getMinutes(),n.getSeconds()].map(v=>String(v).padStart(2,'0')).join(':');
+}
+
+// ======== COUNTDOWNS ========
+const ALES_DATE = new Date('2026-05-10T10:15:00');
+const TECIL_DATE = new Date('2026-07-31T23:59:59');
+const START_DATE = new Date('2026-04-06T00:00:00');
+
+function cdHTML(diff, colorOverride) {
+  const d = Math.floor(diff/86400000);
+  const h = Math.floor((diff%86400000)/3600000);
+  const m = Math.floor((diff%3600000)/60000);
+  const s = Math.floor((diff%60000)/1000);
+  const style = colorOverride ? `style="color:${colorOverride};-webkit-text-fill-color:${colorOverride}"` : '';
+  return ['GÜN|'+d,'SAAT|'+String(h).padStart(2,'0'),'DAK|'+String(m).padStart(2,'0'),'SAN|'+String(s).padStart(2,'0')]
+    .map(x => {
+      const [lbl,num] = x.split('|');
+      return `<div class="cd-box"><div class="cd-num" ${style}>${num}</div><div class="cd-label">${lbl}</div></div>`;
+    }).join('');
+}
+
+function updateCountdowns() {
+  const now = new Date();
+  const d1 = ALES_DATE - now;
+  const d2 = TECIL_DATE - now;
+  if (d1 > 0) {
+    document.getElementById('cd-ales').innerHTML = cdHTML(d1);
+    const total = ALES_DATE - START_DATE;
+    const passed = now - START_DATE;
+    const pct = Math.min(100, Math.max(0, Math.round(passed/total*100)));
+    document.getElementById('prog-fill').style.width = pct + '%';
+    document.getElementById('prog-pct').textContent = pct + '%';
+  }
+  if (d2 > 0) {
+    document.getElementById('cd-tecil').innerHTML = cdHTML(d2, '#ffa000');
+  }
+}
+
+// ======== DAILY PLAN ========
+function renderPlan() {
+  document.getElementById('plan-list').innerHTML = PLAN_DATA.map((p,i) => `
+    <div class="plan-row${p.highlight?' highlight':''}">
+      <div class="plan-time">${p.time}</div>
+      <div class="plan-line">
+        <div class="plan-dot" style="${p.highlight?'background:var(--accent);box-shadow:0 0 8px var(--glow)':p.color?'background:'+p.color+';border-color:'+p.color:''}"></div>
+        ${i < PLAN_DATA.length-1 ? '<div class="plan-vline"></div>' : ''}
+      </div>
+      <div class="plan-content">
+        <div class="plan-title" style="${p.highlight?'color:var(--accent)':''}">${p.title}</div>
+        <div class="plan-sub">${p.sub}</div>
+      </div>
+    </div>
+  `).join('');
+}
+
+// ======== TASKS ========
+function taskHTML(t, badgeClass, badgeText) {
+  const isDone = !!doneTasks[t.id];
+  return `
+    <div class="task${isDone?' done':''}" id="task-${t.id}" onclick="toggleTask('${t.id}')">
+      <div class="task-chk"></div>
+      <div class="task-body">
+        <div class="task-title">${t.title}</div>
+        <div class="task-sub">${t.sub}</div>
+      </div>
+      <div class="badge ${badgeClass}">${badgeText}</div>
+    </div>`;
+}
+
+function renderTasks() {
+  document.getElementById('tasks-fire').innerHTML = TASKS_DATA.fire.map(t=>taskHTML(t,'b-fire','ACİL')).join('');
+  document.getElementById('tasks-month').innerHTML = TASKS_DATA.month.map(t=>taskHTML(t,'b-amber','BU AY')).join('');
+  document.getElementById('tasks-later').innerHTML = TASKS_DATA.later.map(t=>taskHTML(t,'b-green','1-3 AY')).join('');
+  document.getElementById('tasks-frozen').innerHTML = TASKS_DATA.frozen.map(t=>taskHTML(t,'b-gray','BEKLET')).join('');
+}
+
+function toggleTask(id) {
+  if (doneTasks[id]) {
+    delete doneTasks[id];
+  } else {
+    doneTasks[id] = Date.now();
+    playTick();
+  }
+  saveData('done', doneTasks);
+  const el = document.getElementById('task-'+id);
+  if (el) el.classList.toggle('done', !!doneTasks[id]);
+  const chk = el?.querySelector('.task-chk');
+  if (chk) chk.className = 'task-chk' + (doneTasks[id] ? ' done' : '');
+  const title = el?.querySelector('.task-title');
+  if (title) title.className = 'task-title' + (doneTasks[id] ? ' done' : '');
+  updateStats();
+}
+
+function updateStats() {
+  const done = Object.keys(doneTasks).length;
+  document.getElementById('st-done').textContent = done;
+  document.getElementById('st-total').textContent = 12;
+}
+
+function resetTasks() {
+  if (confirm('Tüm görev ilerlemesi silinecek. Emin misin?')) {
+    doneTasks = {};
+    saveData('done', {});
+    renderTasks();
+    updateStats();
+  }
+}
+
+// ======== TABS ========
+function showTab(name, btn) {
+  document.querySelectorAll('[id^="tab-"]').forEach(t => t.style.display = 'none');
+  const el = document.getElementById('tab-'+name);
+  el.style.display = 'block';
+  el.classList.add('fade-in');
+  setTimeout(() => el.classList.remove('fade-in'), 300);
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  btn.classList.add('active');
+  document.getElementById('content').scrollTop = 0;
+}
+
+// ======== SHEETS ========
+function openSheet(id) {
+  document.getElementById(id).classList.add('open');
+  const btn = document.getElementById('alarm-hbtn');
+  if(btn){btn.classList.add('ringing');setTimeout(()=>btn.classList.remove('ringing'),700);}
+}
+function closeSheet(id) { document.getElementById(id).classList.remove('open'); }
+function closeSheetOutside(e, id) { if (e.target === document.getElementById(id)) closeSheet(id); }
+
+// ======== ALARMS ========
+function renderAlarms() {
+  document.getElementById('alarm-list-dom').innerHTML = ALARMS_DATA.map(a => `
+    <div class="alarm-row">
+      <div class="alarm-info">
+        <div class="alarm-time">${a.time}</div>
+        <div class="alarm-desc">${a.desc}</div>
+      </div>
+      <div class="toggle-wrap">
+        <div class="toggle${a.on?' on':''}" id="tog-${a.id}" onclick="toggleAlarm(${a.id})"></div>
+      </div>
+    </div>
+  `).join('');
+}
+
+function toggleAlarm(id) {
+  ALARMS_DATA[id].on = !ALARMS_DATA[id].on;
+  document.getElementById('tog-'+id).classList.toggle('on', ALARMS_DATA[id].on);
+  saveData('alarms', ALARMS_DATA.map(a=>a.on));
+}
+
+let lastAlarmFired = {};
+function checkAlarms() {
+  const now = new Date();
+  const hm = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
+  const today = now.toDateString();
+  ALARMS_DATA.forEach(a => {
+    const key = today + '_' + a.id;
+    if (a.on && a.time === hm && !lastAlarmFired[key]) {
+      lastAlarmFired[key] = true;
+      fireAlarm(a);
+    }
+  });
+}
+
+function fireAlarm(alarm) {
+  playAlarmSound();
+  const btn = document.getElementById('alarm-hbtn');
+  if(btn){btn.classList.add('ringing');setTimeout(()=>btn.classList.remove('ringing'),700);}
+  if ('Notification' in window && Notification.permission === 'granted') {
+    new Notification('⏰ Elysium Bot', {
+      body: alarm.time + ' — ' + alarm.desc,
+      icon: './icon.svg',
+      tag: 'elysium-alarm-' + alarm.id,
+      renotify: true,
+      vibrate: [300, 150, 300, 150, 300],
+    });
+  }
+}
+
+// ======== MUSIC (Hans Zimmer - Stay synth) ========
+let audioCtx, musicPlaying = false, musicNodes = [];
+
+function buildStayMelody() {
+  const c = audioCtx;
+  const master = c.createGain();
+  master.gain.value = 0.18;
+  master.connect(c.destination);
+
+  // Simple reverb-like convolver simulation with delay
+  const delay = c.createDelay(2);
+  delay.delayTime.value = 0.4;
+  const feedback = c.createGain();
+  feedback.gain.value = 0.35;
+  const delayGain = c.createGain();
+  delayGain.gain.value = 0.3;
+  delay.connect(feedback);
+  feedback.connect(delay);
+  delay.connect(delayGain);
+  delayGain.connect(master);
+
+  // Stay melody — simplified note sequence (Hz)
+  // E minor feel: E3, B3, E4, G4, A4, B4, D5, E5
+  const melody = [
+    164.81, 246.94, 329.63, 392.00, 440.00, 493.88, 587.33, 659.25,
+    587.33, 493.88, 440.00, 392.00, 329.63, 246.94, 164.81, 196.00,
+    246.94, 329.63, 392.00, 493.88, 587.33, 659.25, 587.33, 493.88,
+  ];
+
+  const dur = 0.8;
+  const loops = 9999;
+  let loopCount = 0;
+  const totalNotes = melody.length;
+
+  function playLoop(startTime) {
+    if (!musicPlaying) return;
+    melody.forEach((freq, i) => {
+      const t = startTime + i * dur;
+      // Organ-like tone
+      const osc1 = c.createOscillator();
+      const osc2 = c.createOscillator();
+      const env = c.createGain();
+      osc1.type = 'sine';
+      osc2.type = 'sine';
+      osc1.frequency.value = freq;
+      osc2.frequency.value = freq * 2;
+      osc1.connect(env);
+      osc2.connect(env);
+      env.connect(master);
+      env.connect(delay);
+      const g2 = c.createGain();
+      g2.gain.value = 0.3;
+      osc2.connect(g2);
+      g2.connect(master);
+
+      env.gain.setValueAtTime(0, t);
+      env.gain.linearRampToValueAtTime(0.6, t + 0.05);
+      env.gain.setValueAtTime(0.5, t + dur * 0.6);
+      env.gain.linearRampToValueAtTime(0, t + dur);
+
+      osc1.start(t); osc1.stop(t + dur);
+      osc2.start(t); osc2.stop(t + dur);
+      musicNodes.push(osc1, osc2);
+    });
+
+    // Sub bass pulse
+    for (let i = 0; i < totalNotes; i++) {
+      const t = startTime + i * dur;
+      const bass = c.createOscillator();
+      const bassEnv = c.createGain();
+      bass.type = 'sine';
+      bass.frequency.value = melody[i] / 2;
+      bass.connect(bassEnv);
+      bassEnv.connect(master);
+      bassEnv.gain.setValueAtTime(0, t);
+      bassEnv.gain.linearRampToValueAtTime(0.4, t + 0.1);
+      bassEnv.gain.linearRampToValueAtTime(0, t + dur * 0.8);
+      bass.start(t); bass.stop(t + dur);
+      musicNodes.push(bass);
+    }
+
+    const nextStart = startTime + totalNotes * dur;
+    loopCount++;
+    if (loopCount < loops && musicPlaying) {
+      setTimeout(() => { if(musicPlaying) playLoop(c.currentTime); }, (totalNotes * dur - 0.5) * 1000);
+    }
+  }
+
+  playLoop(c.currentTime + 0.1);
+  return master;
+}
+
+function toggleMusic() {
+  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+  if (audioCtx.state === 'suspended') audioCtx.resume();
+
+  musicPlaying = !musicPlaying;
+
+  const btn = document.querySelector('.music-btn');
+  const wave = document.getElementById('music-wave');
+  const icon = document.getElementById('music-icon');
+  const hbtn = document.getElementById('music-hbtn');
+
+  if (musicPlaying) {
+    buildStayMelody();
+    btn.textContent = '⏸';
+    wave.classList.remove('paused');
+    icon.classList.add('playing');
+    hbtn.classList.add('playing');
+  } else {
+    musicNodes.forEach(n => { try { n.stop(); } catch(e){} });
+    musicNodes = [];
+    btn.textContent = '▶';
+    wave.classList.add('paused');
+    icon.classList.remove('playing');
+    hbtn.classList.remove('playing');
+  }
+}
+
+// ======== SOUNDS ========
+function playTick() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    const o = audioCtx.createOscillator();
+    const g = audioCtx.createGain();
+    o.connect(g); g.connect(audioCtx.destination);
+    o.frequency.value = 1200; o.type = 'sine';
+    g.gain.setValueAtTime(0.25, audioCtx.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+    o.start(); o.stop(audioCtx.currentTime + 0.12);
+  } catch(e){}
+}
+
+function playAlarmSound() {
+  try {
+    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
+    if (audioCtx.state === 'suspended') audioCtx.resume();
+    const freqs = [880,1047,880,1047,880,1047,880,1047];
+    freqs.forEach((f,i) => {
+      const o = audioCtx.createOscillator();
+      const g = audioCtx.createGain();
+      o.connect(g); g.connect(audioCtx.destination);
+      o.type = 'square'; o.frequency.value = f;
+      const t = audioCtx.currentTime + i * 0.22;
+      g.gain.setValueAtTime(0, t);
+      g.gain.linearRampToValueAtTime(0.35, t + 0.02);
+      g.gain.exponentialRampToValueAtTime(0.001, t + 0.20);
+      o.start(t); o.stop(t + 0.21);
+    });
+  } catch(e){}
+}
+
+// ======== THEME ========
+function setTheme(name, save=true) {
+  document.body.setAttribute('data-theme', name);
+  currentTheme = name;
+  if(save) saveData('theme', name);
+  document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
+  const btn = document.getElementById('th-'+name);
+  if(btn) btn.classList.add('active');
+  // Update meta theme color
+  const colors = {cosmos:'#050510', ember:'#0d0500', void:'#000000'};
+  document.getElementById('theme-meta').content = colors[name] || '#050510';
+}
+
+// ======== NOTIFICATIONS ========
+function requestNotif() {
+  if (!('Notification' in window)) return alert('Bildirimler bu tarayıcıda desteklenmiyor.');
+  Notification.requestPermission().then(updateNotifStatus);
+}
+function updateNotifStatus() {
+  const el = document.getElementById('notif-status');
+  if (!el) return;
+  if (!('Notification' in window)) { el.textContent = 'Desteklenmiyor'; return; }
+  const states = {granted:'✓ Aktif', denied:'✗ Engellendi', default:'İzin Bekleniyor'};
+  el.textContent = states[Notification.permission] || '—';
+  el.className = 'prof-val' + (Notification.permission === 'granted' ? ' hi' : '');
+}
+
+// Request on load
+if ('Notification' in window && Notification.permission === 'default') {
+  Notification.requestPermission().then(updateNotifStatus);
+}
+</script>
+</body>
+</html>

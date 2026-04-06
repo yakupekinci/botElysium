@@ -1,0 +1,14 @@
+{
+  "name": "Elysium Bot",
+  "short_name": "Elysium",
+  "description": "Kişisel AI Asistan — Yakup Ekinci",
+  "start_url": "/botElysium/",
+  "scope": "/botElysium/",
+  "display": "standalone",
+  "background_color": "#050510",
+  "theme_color": "#050510",
+  "orientation": "portrait-primary",
+  "icons": [
+    { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
+  ]
+}
