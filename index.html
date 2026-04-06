@@ -221,10 +221,8 @@ html,body{height:100%;background:var(--bg0);color:var(--text);font-family:var(--
 </head>
 <body data-theme="cosmos">
 
-<!-- PARTICLES -->
 <div id="particles"></div>
 
-<!-- SPLASH -->
 <div id="splash">
   <div class="splash-ring"></div>
   <div class="splash-title">ELYSIUM</div>
@@ -232,7 +230,6 @@ html,body{height:100%;background:var(--bg0);color:var(--text);font-family:var(--
   <div class="splash-bar"><div class="splash-bar-fill"></div></div>
 </div>
 
-<!-- APP -->
 <div id="app">
   <div class="header">
     <div class="header-logo">ELYSIUM</div>
@@ -253,7 +250,6 @@ html,body{height:100%;background:var(--bg0);color:var(--text);font-family:var(--
 
   <div class="content" id="content">
 
-    <!-- HOME -->
     <div id="tab-home" class="fade-in">
       <div class="music-bar" id="music-bar">
         <div class="music-icon" id="music-icon">💿</div>
@@ -319,7 +315,6 @@ html,body{height:100%;background:var(--bg0);color:var(--text);font-family:var(--
       </div>
     </div>
 
-    <!-- DAILY PLAN -->
     <div id="tab-plan" style="display:none">
       <div class="card">
         <div class="card-label">GÜNLÜK PLAN</div>
@@ -327,7 +322,6 @@ html,body{height:100%;background:var(--bg0);color:var(--text);font-family:var(--
       </div>
     </div>
 
-    <!-- TASKS -->
     <div id="tab-tasks" style="display:none">
       <div class="sh">🔥 Acil — Bu Hafta</div>
       <div class="card" id="tasks-fire"></div>
@@ -339,7 +333,6 @@ html,body{height:100%;background:var(--bg0);color:var(--text);font-family:var(--
       <div class="card" id="tasks-frozen"></div>
     </div>
 
-    <!-- PROFILE -->
     <div id="tab-profile" style="display:none">
       <div class="card">
         <div class="card-label">KİMLİK</div>
@@ -373,7 +366,6 @@ html,body{height:100%;background:var(--bg0);color:var(--text);font-family:var(--
       </div>
     </div>
 
-    <!-- SETTINGS -->
     <div id="tab-settings" style="display:none">
       <div class="card">
         <div class="card-label">TEMA</div>
@@ -414,7 +406,6 @@ html,body{height:100%;background:var(--bg0);color:var(--text);font-family:var(--
   </div>
 </div>
 
-<!-- ALARM SHEET -->
 <div class="overlay" id="alarm-sheet" onclick="closeSheetOutside(event,'alarm-sheet')">
   <div class="sheet">
     <div class="sheet-title">⏰ ALARMLAR</div>
@@ -423,8 +414,39 @@ html,body{height:100%;background:var(--bg0);color:var(--text);font-family:var(--
   </div>
 </div>
 
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js"></script>
+
 <script>
-// ======== DATA ========
+// EMNİYET KEMERİ: JS hatası olsa bile Splash ekranı kapanır
+setTimeout(() => {
+  const splash = document.getElementById('splash');
+  if(splash && splash.style.display !== 'none') {
+    splash.style.opacity = '0';
+    setTimeout(() => { splash.style.display = 'none'; document.getElementById('app').classList.add('visible'); }, 800);
+  }
+}, 4000);
+
+// FIREBASE KONFİGÜRASYONU VE BAŞLATMA
+const firebaseConfig = {
+  apiKey: "AIzaSyCU08n2MbhgejPb8exKyvcPKn-xLkBu0sY",
+  authDomain: "botelysium-ddf50.firebaseapp.com",
+  projectId: "botelysium-ddf50",
+  storageBucket: "botelysium-ddf50.firebasestorage.app",
+  messagingSenderId: "763753788539",
+  appId: "1:763753788539:web:62715bac995c0dc5b45ede",
+  measurementId: "G-7GMTH40N5E"
+};
+
+let messaging;
+try {
+  firebase.initializeApp(firebaseConfig);
+  messaging = firebase.messaging();
+} catch(e) {
+  console.error("Firebase başlatılamadı:", e);
+}
+
+// VERİLER
 const ALARMS_DATA = [
   {id:0,time:'09:00',desc:'SABAH BAŞLANGIÇ',on:true},
   {id:1,time:'13:00',desc:'ANA ÇALIŞMA BLOĞU',on:true},
@@ -468,7 +490,7 @@ const TASKS_DATA = {
   ]
 };
 
-// ======== STORAGE ========
+// STORAGE İŞLEMLERİ
 function saveData(key, val) { try { localStorage.setItem('elysium_'+key, JSON.stringify(val)); } catch(e){} }
 function loadData(key, def) { try { const v = localStorage.getItem('elysium_'+key); return v ? JSON.parse(v) : def; } catch(e){ return def; } }
 
@@ -480,15 +502,40 @@ if (alarmState) {
   alarmState.forEach((on, i) => { if (ALARMS_DATA[i]) ALARMS_DATA[i].on = on; });
 }
 
-// ======== INIT ========
-window.addEventListener('load', () => {
-  // Apply saved theme
-  setTheme(currentTheme, false);
+// BİLDİRİM & TOKEN FONKSİYONU
+function requestNotif() {
+  if (!('Notification' in window)) return alert('Bildirimler bu tarayıcıda desteklenmiyor.');
+  Notification.requestPermission().then((permission) => {
+    if (permission === 'granted' && messaging) {
+      messaging.getToken({ 
+        vapidKey: 'BIO3dLGuJCEipJ1v0zHnxoO0iuewsV9ekC_Rsc1bockfBb35l66a9wa6GwWp_kWQoAYscIE5W6dYhSU9KJp7ikg' 
+      })
+      .then((currentToken) => {
+        if (currentToken) {
+          console.log('TEST İÇİN BU TOKENI KOPYALA:', currentToken);
+          alert('İzin verildi! Token konsola yazdırıldı. (Uygulamayı kapatıp test atabilirsin)');
+          updateNotifStatus();
+        }
+      });
+    }
+    updateNotifStatus();
+  });
+}
 
-  // Particles
+function updateNotifStatus() {
+  const el = document.getElementById('notif-status');
+  if (!el) return;
+  if (!('Notification' in window)) { el.textContent = 'Desteklenmiyor'; return; }
+  const states = {granted:'✓ Aktif', denied:'✗ Engellendi', default:'İzin Bekleniyor'};
+  el.textContent = states[Notification.permission] || '—';
+  el.className = 'prof-val' + (Notification.permission === 'granted' ? ' hi' : '');
+}
+
+// UYGULAMA YÜKLENDİĞİNDE ÇALIŞACAKLAR
+window.addEventListener('load', () => {
+  setTheme(currentTheme, false);
   spawnParticles();
 
-  // Splash
   setTimeout(() => {
     document.getElementById('splash').style.opacity = '0';
     setTimeout(() => {
@@ -497,56 +544,35 @@ window.addEventListener('load', () => {
     }, 800);
   }, 2000);
 
-  // SW
   if ('serviceWorker' in navigator) {
     navigator.serviceWorker.register('./sw.js').catch(()=>{});
   }
 
-  // Timers
-  updateClock();
-  setInterval(updateClock, 1000);
-  updateCountdowns();
-  setInterval(updateCountdowns, 1000);
+  updateClock(); setInterval(updateClock, 1000);
+  updateCountdowns(); setInterval(updateCountdowns, 1000);
+  checkAlarms(); setInterval(checkAlarms, 15000);
 
-  // Alarm check
-  checkAlarms();
-  setInterval(checkAlarms, 15000);
-
-  // Render
-  renderPlan();
-  renderTasks();
-  renderAlarms();
-  updateStats();
-  updateNotifStatus();
+  renderPlan(); renderTasks(); renderAlarms();
+  updateStats(); updateNotifStatus();
 });
 
-// ======== PARTICLES ========
+// ARAYÜZ VE FONKSİYONLAR
 function spawnParticles() {
   const container = document.getElementById('particles');
   for (let i = 0; i < 20; i++) {
     const p = document.createElement('div');
     p.className = 'particle';
     const size = Math.random() * 3 + 1;
-    p.style.cssText = `
-      width:${size}px;height:${size}px;
-      left:${Math.random()*100}%;
-      background:var(--accent);
-      animation-duration:${Math.random()*20+15}s;
-      animation-delay:${Math.random()*20}s;
-      opacity:0;
-    `;
+    p.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;background:var(--accent);animation-duration:${Math.random()*20+15}s;animation-delay:${Math.random()*20}s;opacity:0;`;
     container.appendChild(p);
   }
 }
 
-// ======== CLOCK ========
 function updateClock() {
   const n = new Date();
-  document.getElementById('live-time').textContent =
-    [n.getHours(),n.getMinutes(),n.getSeconds()].map(v=>String(v).padStart(2,'0')).join(':');
+  document.getElementById('live-time').textContent = [n.getHours(),n.getMinutes(),n.getSeconds()].map(v=>String(v).padStart(2,'0')).join(':');
 }
 
-// ======== COUNTDOWNS ========
 const ALES_DATE = new Date('2026-05-10T10:15:00');
 const TECIL_DATE = new Date('2026-07-31T23:59:59');
 const START_DATE = new Date('2026-04-06T00:00:00');
@@ -557,31 +583,24 @@ function cdHTML(diff, colorOverride) {
   const m = Math.floor((diff%3600000)/60000);
   const s = Math.floor((diff%60000)/1000);
   const style = colorOverride ? `style="color:${colorOverride};-webkit-text-fill-color:${colorOverride}"` : '';
-  return ['GÜN|'+d,'SAAT|'+String(h).padStart(2,'0'),'DAK|'+String(m).padStart(2,'0'),'SAN|'+String(s).padStart(2,'0')]
-    .map(x => {
-      const [lbl,num] = x.split('|');
-      return `<div class="cd-box"><div class="cd-num" ${style}>${num}</div><div class="cd-label">${lbl}</div></div>`;
-    }).join('');
+  return ['GÜN|'+d,'SAAT|'+String(h).padStart(2,'0'),'DAK|'+String(m).padStart(2,'0'),'SAN|'+String(s).padStart(2,'0')].map(x => {
+    const [lbl,num] = x.split('|'); return `<div class="cd-box"><div class="cd-num" ${style}>${num}</div><div class="cd-label">${lbl}</div></div>`;
+  }).join('');
 }
 
 function updateCountdowns() {
   const now = new Date();
-  const d1 = ALES_DATE - now;
-  const d2 = TECIL_DATE - now;
+  const d1 = ALES_DATE - now; const d2 = TECIL_DATE - now;
   if (d1 > 0) {
     document.getElementById('cd-ales').innerHTML = cdHTML(d1);
-    const total = ALES_DATE - START_DATE;
-    const passed = now - START_DATE;
+    const total = ALES_DATE - START_DATE; const passed = now - START_DATE;
     const pct = Math.min(100, Math.max(0, Math.round(passed/total*100)));
     document.getElementById('prog-fill').style.width = pct + '%';
     document.getElementById('prog-pct').textContent = pct + '%';
   }
-  if (d2 > 0) {
-    document.getElementById('cd-tecil').innerHTML = cdHTML(d2, '#ffa000');
-  }
+  if (d2 > 0) { document.getElementById('cd-tecil').innerHTML = cdHTML(d2, '#ffa000'); }
 }
 
-// ======== DAILY PLAN ========
 function renderPlan() {
   document.getElementById('plan-list').innerHTML = PLAN_DATA.map((p,i) => `
     <div class="plan-row${p.highlight?' highlight':''}">
@@ -598,18 +617,9 @@ function renderPlan() {
   `).join('');
 }
 
-// ======== TASKS ========
 function taskHTML(t, badgeClass, badgeText) {
   const isDone = !!doneTasks[t.id];
-  return `
-    <div class="task${isDone?' done':''}" id="task-${t.id}" onclick="toggleTask('${t.id}')">
-      <div class="task-chk"></div>
-      <div class="task-body">
-        <div class="task-title">${t.title}</div>
-        <div class="task-sub">${t.sub}</div>
-      </div>
-      <div class="badge ${badgeClass}">${badgeText}</div>
-    </div>`;
+  return `<div class="task${isDone?' done':''}" id="task-${t.id}" onclick="toggleTask('${t.id}')"><div class="task-chk"></div><div class="task-body"><div class="task-title">${t.title}</div><div class="task-sub">${t.sub}</div></div><div class="badge ${badgeClass}">${badgeText}</div></div>`;
 }
 
 function renderTasks() {
@@ -620,19 +630,12 @@ function renderTasks() {
 }
 
 function toggleTask(id) {
-  if (doneTasks[id]) {
-    delete doneTasks[id];
-  } else {
-    doneTasks[id] = Date.now();
-    playTick();
-  }
+  if (doneTasks[id]) { delete doneTasks[id]; } else { doneTasks[id] = Date.now(); playTick(); }
   saveData('done', doneTasks);
   const el = document.getElementById('task-'+id);
   if (el) el.classList.toggle('done', !!doneTasks[id]);
-  const chk = el?.querySelector('.task-chk');
-  if (chk) chk.className = 'task-chk' + (doneTasks[id] ? ' done' : '');
-  const title = el?.querySelector('.task-title');
-  if (title) title.className = 'task-title' + (doneTasks[id] ? ' done' : '');
+  const chk = el?.querySelector('.task-chk'); if (chk) chk.className = 'task-chk' + (doneTasks[id] ? ' done' : '');
+  const title = el?.querySelector('.task-title'); if (title) title.className = 'task-title' + (doneTasks[id] ? ' done' : '');
   updateStats();
 }
 
@@ -644,47 +647,28 @@ function updateStats() {
 
 function resetTasks() {
   if (confirm('Tüm görev ilerlemesi silinecek. Emin misin?')) {
-    doneTasks = {};
-    saveData('done', {});
-    renderTasks();
-    updateStats();
+    doneTasks = {}; saveData('done', {}); renderTasks(); updateStats();
   }
 }
 
-// ======== TABS ========
 function showTab(name, btn) {
   document.querySelectorAll('[id^="tab-"]').forEach(t => t.style.display = 'none');
   const el = document.getElementById('tab-'+name);
-  el.style.display = 'block';
-  el.classList.add('fade-in');
-  setTimeout(() => el.classList.remove('fade-in'), 300);
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
-  btn.classList.add('active');
+  el.style.display = 'block'; el.classList.add('fade-in'); setTimeout(() => el.classList.remove('fade-in'), 300);
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); btn.classList.add('active');
   document.getElementById('content').scrollTop = 0;
 }
 
-// ======== SHEETS ========
-function openSheet(id) {
-  document.getElementById(id).classList.add('open');
-  const btn = document.getElementById('alarm-hbtn');
-  if(btn){btn.classList.add('ringing');setTimeout(()=>btn.classList.remove('ringing'),700);}
-}
+function openSheet(id) { document.getElementById(id).classList.add('open'); const btn = document.getElementById('alarm-hbtn'); if(btn){btn.classList.add('ringing');setTimeout(()=>btn.classList.remove('ringing'),700);} }
 function closeSheet(id) { document.getElementById(id).classList.remove('open'); }
 function closeSheetOutside(e, id) { if (e.target === document.getElementById(id)) closeSheet(id); }
 
-// ======== ALARMS ========
 function renderAlarms() {
   document.getElementById('alarm-list-dom').innerHTML = ALARMS_DATA.map(a => `
     <div class="alarm-row">
-      <div class="alarm-info">
-        <div class="alarm-time">${a.time}</div>
-        <div class="alarm-desc">${a.desc}</div>
-      </div>
-      <div class="toggle-wrap">
-        <div class="toggle${a.on?' on':''}" id="tog-${a.id}" onclick="toggleAlarm(${a.id})"></div>
-      </div>
-    </div>
-  `).join('');
+      <div class="alarm-info"><div class="alarm-time">${a.time}</div><div class="alarm-desc">${a.desc}</div></div>
+      <div class="toggle-wrap"><div class="toggle${a.on?' on':''}" id="tog-${a.id}" onclick="toggleAlarm(${a.id})"></div></div>
+    </div>`).join('');
 }
 
 function toggleAlarm(id) {
@@ -700,10 +684,7 @@ function checkAlarms() {
   const today = now.toDateString();
   ALARMS_DATA.forEach(a => {
     const key = today + '_' + a.id;
-    if (a.on && a.time === hm && !lastAlarmFired[key]) {
-      lastAlarmFired[key] = true;
-      fireAlarm(a);
-    }
+    if (a.on && a.time === hm && !lastAlarmFired[key]) { lastAlarmFired[key] = true; fireAlarm(a); }
   });
 }
 
@@ -712,145 +693,58 @@ function fireAlarm(alarm) {
   const btn = document.getElementById('alarm-hbtn');
   if(btn){btn.classList.add('ringing');setTimeout(()=>btn.classList.remove('ringing'),700);}
   if ('Notification' in window && Notification.permission === 'granted') {
-    new Notification('⏰ Elysium Bot', {
-      body: alarm.time + ' — ' + alarm.desc,
-      icon: './icon.svg',
-      tag: 'elysium-alarm-' + alarm.id,
-      renotify: true,
-      vibrate: [300, 150, 300, 150, 300],
-    });
+    new Notification('⏰ Elysium Bot', { body: alarm.time + ' — ' + alarm.desc, icon: './icon.svg', tag: 'elysium-alarm-' + alarm.id, renotify: true, vibrate: [300, 150, 300, 150, 300] });
   }
 }
 
-// ======== MUSIC (Hans Zimmer - Stay synth) ========
 let audioCtx, musicPlaying = false, musicNodes = [];
-
 function buildStayMelody() {
-  const c = audioCtx;
-  const master = c.createGain();
-  master.gain.value = 0.18;
-  master.connect(c.destination);
+  const c = audioCtx; const master = c.createGain(); master.gain.value = 0.18; master.connect(c.destination);
+  const delay = c.createDelay(2); delay.delayTime.value = 0.4;
+  const feedback = c.createGain(); feedback.gain.value = 0.35;
+  const delayGain = c.createGain(); delayGain.gain.value = 0.3;
+  delay.connect(feedback); feedback.connect(delay); delay.connect(delayGain); delayGain.connect(master);
 
-  // Simple reverb-like convolver simulation with delay
-  const delay = c.createDelay(2);
-  delay.delayTime.value = 0.4;
-  const feedback = c.createGain();
-  feedback.gain.value = 0.35;
-  const delayGain = c.createGain();
-  delayGain.gain.value = 0.3;
-  delay.connect(feedback);
-  feedback.connect(delay);
-  delay.connect(delayGain);
-  delayGain.connect(master);
-
-  // Stay melody — simplified note sequence (Hz)
-  // E minor feel: E3, B3, E4, G4, A4, B4, D5, E5
-  const melody = [
-    164.81, 246.94, 329.63, 392.00, 440.00, 493.88, 587.33, 659.25,
-    587.33, 493.88, 440.00, 392.00, 329.63, 246.94, 164.81, 196.00,
-    246.94, 329.63, 392.00, 493.88, 587.33, 659.25, 587.33, 493.88,
-  ];
-
-  const dur = 0.8;
-  const loops = 9999;
-  let loopCount = 0;
-  const totalNotes = melody.length;
+  const melody = [164.81, 246.94, 329.63, 392.00, 440.00, 493.88, 587.33, 659.25, 587.33, 493.88, 440.00, 392.00, 329.63, 246.94, 164.81, 196.00, 246.94, 329.63, 392.00, 493.88, 587.33, 659.25, 587.33, 493.88];
+  const dur = 0.8; const loops = 9999; let loopCount = 0; const totalNotes = melody.length;
 
   function playLoop(startTime) {
     if (!musicPlaying) return;
     melody.forEach((freq, i) => {
       const t = startTime + i * dur;
-      // Organ-like tone
-      const osc1 = c.createOscillator();
-      const osc2 = c.createOscillator();
-      const env = c.createGain();
-      osc1.type = 'sine';
-      osc2.type = 'sine';
-      osc1.frequency.value = freq;
-      osc2.frequency.value = freq * 2;
-      osc1.connect(env);
-      osc2.connect(env);
-      env.connect(master);
-      env.connect(delay);
-      const g2 = c.createGain();
-      g2.gain.value = 0.3;
-      osc2.connect(g2);
-      g2.connect(master);
-
-      env.gain.setValueAtTime(0, t);
-      env.gain.linearRampToValueAtTime(0.6, t + 0.05);
-      env.gain.setValueAtTime(0.5, t + dur * 0.6);
-      env.gain.linearRampToValueAtTime(0, t + dur);
-
-      osc1.start(t); osc1.stop(t + dur);
-      osc2.start(t); osc2.stop(t + dur);
-      musicNodes.push(osc1, osc2);
+      const osc1 = c.createOscillator(); const osc2 = c.createOscillator(); const env = c.createGain();
+      osc1.type = 'sine'; osc2.type = 'sine'; osc1.frequency.value = freq; osc2.frequency.value = freq * 2;
+      osc1.connect(env); osc2.connect(env); env.connect(master); env.connect(delay);
+      const g2 = c.createGain(); g2.gain.value = 0.3; osc2.connect(g2); g2.connect(master);
+      env.gain.setValueAtTime(0, t); env.gain.linearRampToValueAtTime(0.6, t + 0.05); env.gain.setValueAtTime(0.5, t + dur * 0.6); env.gain.linearRampToValueAtTime(0, t + dur);
+      osc1.start(t); osc1.stop(t + dur); osc2.start(t); osc2.stop(t + dur); musicNodes.push(osc1, osc2);
     });
-
-    // Sub bass pulse
     for (let i = 0; i < totalNotes; i++) {
       const t = startTime + i * dur;
-      const bass = c.createOscillator();
-      const bassEnv = c.createGain();
-      bass.type = 'sine';
-      bass.frequency.value = melody[i] / 2;
-      bass.connect(bassEnv);
-      bassEnv.connect(master);
-      bassEnv.gain.setValueAtTime(0, t);
-      bassEnv.gain.linearRampToValueAtTime(0.4, t + 0.1);
-      bassEnv.gain.linearRampToValueAtTime(0, t + dur * 0.8);
-      bass.start(t); bass.stop(t + dur);
-      musicNodes.push(bass);
+      const bass = c.createOscillator(); const bassEnv = c.createGain(); bass.type = 'sine'; bass.frequency.value = melody[i] / 2;
+      bass.connect(bassEnv); bassEnv.connect(master); bassEnv.gain.setValueAtTime(0, t); bassEnv.gain.linearRampToValueAtTime(0.4, t + 0.1); bassEnv.gain.linearRampToValueAtTime(0, t + dur * 0.8);
+      bass.start(t); bass.stop(t + dur); musicNodes.push(bass);
     }
-
-    const nextStart = startTime + totalNotes * dur;
-    loopCount++;
-    if (loopCount < loops && musicPlaying) {
-      setTimeout(() => { if(musicPlaying) playLoop(c.currentTime); }, (totalNotes * dur - 0.5) * 1000);
-    }
+    const nextStart = startTime + totalNotes * dur; loopCount++;
+    if (loopCount < loops && musicPlaying) { setTimeout(() => { if(musicPlaying) playLoop(c.currentTime); }, (totalNotes * dur - 0.5) * 1000); }
   }
-
-  playLoop(c.currentTime + 0.1);
-  return master;
+  playLoop(c.currentTime + 0.1); return master;
 }
 
 function toggleMusic() {
   if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
   if (audioCtx.state === 'suspended') audioCtx.resume();
-
   musicPlaying = !musicPlaying;
-
-  const btn = document.querySelector('.music-btn');
-  const wave = document.getElementById('music-wave');
-  const icon = document.getElementById('music-icon');
-  const hbtn = document.getElementById('music-hbtn');
-
-  if (musicPlaying) {
-    buildStayMelody();
-    btn.textContent = '⏸';
-    wave.classList.remove('paused');
-    icon.classList.add('playing');
-    hbtn.classList.add('playing');
-  } else {
-    musicNodes.forEach(n => { try { n.stop(); } catch(e){} });
-    musicNodes = [];
-    btn.textContent = '▶';
-    wave.classList.add('paused');
-    icon.classList.remove('playing');
-    hbtn.classList.remove('playing');
-  }
+  const btn = document.querySelector('.music-btn'); const wave = document.getElementById('music-wave'); const icon = document.getElementById('music-icon'); const hbtn = document.getElementById('music-hbtn');
+  if (musicPlaying) { buildStayMelody(); btn.textContent = '⏸'; wave.classList.remove('paused'); icon.classList.add('playing'); hbtn.classList.add('playing'); } 
+  else { musicNodes.forEach(n => { try { n.stop(); } catch(e){} }); musicNodes = []; btn.textContent = '▶'; wave.classList.add('paused'); icon.classList.remove('playing'); hbtn.classList.remove('playing'); }
 }
 
-// ======== SOUNDS ========
 function playTick() {
   try {
     if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const o = audioCtx.createOscillator();
-    const g = audioCtx.createGain();
-    o.connect(g); g.connect(audioCtx.destination);
-    o.frequency.value = 1200; o.type = 'sine';
-    g.gain.setValueAtTime(0.25, audioCtx.currentTime);
-    g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
+    const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination);
+    o.frequency.value = 1200; o.type = 'sine'; g.gain.setValueAtTime(0.25, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
     o.start(); o.stop(audioCtx.currentTime + 0.12);
   } catch(e){}
 }
@@ -861,88 +755,19 @@ function playAlarmSound() {
     if (audioCtx.state === 'suspended') audioCtx.resume();
     const freqs = [880,1047,880,1047,880,1047,880,1047];
     freqs.forEach((f,i) => {
-      const o = audioCtx.createOscillator();
-      const g = audioCtx.createGain();
-      o.connect(g); g.connect(audioCtx.destination);
-      o.type = 'square'; o.frequency.value = f;
-      const t = audioCtx.currentTime + i * 0.22;
-      g.gain.setValueAtTime(0, t);
-      g.gain.linearRampToValueAtTime(0.35, t + 0.02);
-      g.gain.exponentialRampToValueAtTime(0.001, t + 0.20);
+      const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination);
+      o.type = 'square'; o.frequency.value = f; const t = audioCtx.currentTime + i * 0.22;
+      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.35, t + 0.02); g.gain.exponentialRampToValueAtTime(0.001, t + 0.20);
       o.start(t); o.stop(t + 0.21);
     });
   } catch(e){}
 }
 
-// ======== THEME ========
 function setTheme(name, save=true) {
-  document.body.setAttribute('data-theme', name);
-  currentTheme = name;
-  if(save) saveData('theme', name);
-  document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active'));
-  const btn = document.getElementById('th-'+name);
-  if(btn) btn.classList.add('active');
-  // Update meta theme color
-  const colors = {cosmos:'#050510', ember:'#0d0500', void:'#000000'};
-  document.getElementById('theme-meta').content = colors[name] || '#050510';
+  document.body.setAttribute('data-theme', name); currentTheme = name; if(save) saveData('theme', name);
+  document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active')); const btn = document.getElementById('th-'+name); if(btn) btn.classList.add('active');
+  const colors = {cosmos:'#050510', ember:'#0d0500', void:'#000000'}; document.getElementById('theme-meta').content = colors[name] || '#050510';
 }
-
-// ======== NOTIFICATIONS ========
-function requestNotif() {
-  if (!('Notification' in window)) return alert('Bildirimler bu tarayıcıda desteklenmiyor.');
-  Notification.requestPermission().then(updateNotifStatus);
-}
-function updateNotifStatus() {
-  const el = document.getElementById('notif-status');
-  if (!el) return;
-  if (!('Notification' in window)) { el.textContent = 'Desteklenmiyor'; return; }
-  const states = {granted:'✓ Aktif', denied:'✗ Engellendi', default:'İzin Bekleniyor'};
-  el.textContent = states[Notification.permission] || '—';
-  el.className = 'prof-val' + (Notification.permission === 'granted' ? ' hi' : '');
-}
-
-// Request on load
-if ('Notification' in window && Notification.permission === 'default') {
-  Notification.requestPermission().then(updateNotifStatus);
-}
-<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
-  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js"></script>
-
-  <script>
-    // 2. ADIM: Senin Firebase Bilgilerin
-    const firebaseConfig = {
-      apiKey: "AIzaSyCU08n2MbhgejPb8exKyvcPKn-xLkBu0sY",
-      authDomain: "botelysium-ddf50.firebaseapp.com",
-      projectId: "botelysium-ddf50",
-      storageBucket: "botelysium-ddf50.firebasestorage.app",
-      messagingSenderId: "763753788539",
-      appId: "1:763753788539:web:62715bac995c0dc5b45ede",
-      measurementId: "G-7GMTH40N5E"
-    };
-
-    firebase.initializeApp(firebaseConfig);
-    const messaging = firebase.messaging();
-
-    // 3. ADIM: Bildirim İzni ve Token Alma Fonksiyonu
-    function requestNotif() {
-      Notification.requestPermission().then((permission) => {
-        if (permission === 'granted') {
-          messaging.getToken({ 
-            vapidKey: 'BIO3dLGuJCEipJ1v0zHnxoO0iuewsV9ekC_Rsc1bockfBb35l66a9wa6GwWp_kWQoAYscIE5W6dYhSU9KJp7ikg' 
-          })
-          .then((currentToken) => {
-            if (currentToken) {
-              console.log('TEST İÇİN BU TOKENI KOPYALA:', currentToken);
-              alert('İzin verildi! Token konsola yazdırıldı.');
-              updateNotifStatus();
-            }
-          });
-        }
-      });
-    }
-
-    // 4. ADIM: Senin Kendi Yazdığın Diğer JS Kodları (updateClock, showTab vb.)
-    // Bunları bu script etiketinin içine, en sona ekleyebilirsin.
-  </script>
+</script>
 </body>
 </html>
