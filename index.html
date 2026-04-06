@@ -905,6 +905,44 @@ function updateNotifStatus() {
 if ('Notification' in window && Notification.permission === 'default') {
   Notification.requestPermission().then(updateNotifStatus);
 }
-</script>
+<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
+  <script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js"></script>
+
+  <script>
+    // 2. ADIM: Senin Firebase Bilgilerin
+    const firebaseConfig = {
+      apiKey: "AIzaSyCU08n2MbhgejPb8exKyvcPKn-xLkBu0sY",
+      authDomain: "botelysium-ddf50.firebaseapp.com",
+      projectId: "botelysium-ddf50",
+      storageBucket: "botelysium-ddf50.firebasestorage.app",
+      messagingSenderId: "763753788539",
+      appId: "1:763753788539:web:62715bac995c0dc5b45ede",
+      measurementId: "G-7GMTH40N5E"
+    };
+
+    firebase.initializeApp(firebaseConfig);
+    const messaging = firebase.messaging();
+
+    // 3. ADIM: Bildirim İzni ve Token Alma Fonksiyonu
+    function requestNotif() {
+      Notification.requestPermission().then((permission) => {
+        if (permission === 'granted') {
+          messaging.getToken({ 
+            vapidKey: 'BIO3dLGuJCEipJ1v0zHnxoO0iuewsV9ekC_Rsc1bockfBb35l66a9wa6GwWp_kWQoAYscIE5W6dYhSU9KJp7ikg' 
+          })
+          .then((currentToken) => {
+            if (currentToken) {
+              console.log('TEST İÇİN BU TOKENI KOPYALA:', currentToken);
+              alert('İzin verildi! Token konsola yazdırıldı.');
+              updateNotifStatus();
+            }
+          });
+        }
+      });
+    }
+
+    // 4. ADIM: Senin Kendi Yazdığın Diğer JS Kodları (updateClock, showTab vb.)
+    // Bunları bu script etiketinin içine, en sona ekleyebilirsin.
+  </script>
 </body>
 </html>
