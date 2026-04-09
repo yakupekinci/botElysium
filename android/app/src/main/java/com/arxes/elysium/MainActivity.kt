@@ -2,10 +2,13 @@ package com.arxes.elysium
 
 import android.Manifest
 import android.annotation.SuppressLint
+import android.app.AlarmManager
 import android.content.Intent
 import android.content.pm.PackageManager
+import android.net.Uri
 import android.os.Build
 import android.os.Bundle
+import android.provider.Settings
 import android.webkit.JavascriptInterface
 import android.webkit.WebChromeClient
 import android.webkit.WebView
@@ -14,9 +17,7 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.core.app.ActivityCompat
 import androidx.core.content.ContextCompat
 import com.arxes.elysium.alarm.AlarmScheduler
-import com.arxes.elysium.alarm.AlarmSpec
-import org.json.JSONObject
-import java.util.Locale
+import com.arxes.elysium.alarm.NotificationHelper
 
 class MainActivity : AppCompatActivity() {
     private val scheduler by lazy { AlarmScheduler(this) }
@@ -28,6 +29,7 @@ class MainActivity : AppCompatActivity() {
         setContentView(R.layout.activity_main)
 
         requestNotificationPermissionIfNeeded()
+        requestExactAlarmPermissionIfNeeded()
         webView = findViewById(R.id.webView)
         webView.settings.javaScriptEnabled = true
         webView.settings.domStorageEnabled = true
@@ -40,8 +42,36 @@ class MainActivity : AppCompatActivity() {
 
     private fun requestNotificationPermissionIfNeeded() {
         if (Build.VERSION.SDK_INT < Build.VERSION_CODES.TIRAMISU) return
-        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) == PackageManager.PERMISSION_GRANTED) return
-        ActivityCompat.requestPermissions(this, arrayOf(Manifest.permission.POST_NOTIFICATIONS), 1001)
+        if (ContextCompat.checkSelfPermission(this, Manifest.permission.POST_NOTIFICATIONS) ==
+            PackageManager.PERMISSION_GRANTED
+        ) {
+            return
+        }
+        ActivityCompat.requestPermissions(
+            this,
+            arrayOf(Manifest.permission.POST_NOTIFICATIONS),
+            1001
+        )
+    }
+
+    private fun requestExactAlarmPermissionIfNeeded() {
+        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return
+        val alarmManager = getSystemService(ALARM_SERVICE) as? AlarmManager ?: return
+        if (alarmManager.canScheduleExactAlarms()) return
+        try {
+            startActivity(
+                Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                    data = Uri.parse("package:$packageName")
+                }
+            )
+        } catch (_: Exception) {
+            // Fallback: app details settings when direct exact-alarm screen is unavailable.
+            startActivity(
+                Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                    data = Uri.fromParts("package", packageName, null)
+                }
+            )
+        }
     }
 
     override fun onBackPressed() {
@@ -54,26 +84,47 @@ class MainActivity : AppCompatActivity() {
 
     inner class AndroidBridge {
         @JavascriptInterface
-        fun scheduleAlarm(time: String, label: String) {
-            val parsed = parseTime(time) ?: return
-            scheduler.schedule(AlarmSpec(parsed.first, parsed.second, label.ifBlank { "Hatırlatma" }))
+        fun syncAlarms(json: String) {
+            runOnUiThread { scheduler.syncFromWebJson(json) }
+        }
+
+        @JavascriptInterface
+        fun showTestNotification() {
+            runOnUiThread {
+                NotificationHelper.show(
+                    this@MainActivity,
+                    990_001,
+                    "✅ Test başarılı",
+                    "Elysium sistem bildirimi çalışıyor."
+                )
+            }
         }
 
         @JavascriptInterface
         fun openAppSettings() {
-            startActivity(Intent(android.provider.Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
-                data = android.net.Uri.fromParts("package", packageName, null)
-            })
+            runOnUiThread {
+                startActivity(
+                    Intent(Settings.ACTION_APPLICATION_DETAILS_SETTINGS).apply {
+                        data = Uri.fromParts("package", packageName, null)
+                    }
+                )
+            }
         }
-    }
 
-    private fun parseTime(time: String): Pair<Int, Int>? {
-        val cleaned = time.trim().lowercase(Locale.ROOT)
-        val p = cleaned.split(":")
-        if (p.size != 2) return null
-        val h = p[0].toIntOrNull() ?: return null
-        val m = p[1].toIntOrNull() ?: return null
-        if (h !in 0..23 || m !in 0..59) return null
-        return h to m
+        @JavascriptInterface
+        fun openExactAlarmSettings() {
+            runOnUiThread {
+                if (Build.VERSION.SDK_INT < Build.VERSION_CODES.S) return@runOnUiThread
+                try {
+                    startActivity(
+                        Intent(Settings.ACTION_REQUEST_SCHEDULE_EXACT_ALARM).apply {
+                            data = Uri.parse("package:$packageName")
+                        }
+                    )
+                } catch (_: Exception) {
+                    openAppSettings()
+                }
+            }
+        }
     }
 }

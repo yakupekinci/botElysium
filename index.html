@@ -219,6 +219,17 @@ html,body{height:100%;height:100dvh;background:var(--bg0);color:var(--txt);font-
 .notif-ok{color:var(--ok)}
 .notif-no{color:var(--bad)}
 
+/* ═══ PROMO / DOWNLOAD PAGE ═══ */
+#promo{position:fixed;inset:0;display:none;align-items:center;justify-content:center;padding:24px;background:radial-gradient(circle at 20% 20%,rgba(79,195,247,0.18),transparent 55%),radial-gradient(circle at 80% 80%,rgba(124,77,255,0.16),transparent 50%),var(--bg0);z-index:20}
+.promo-card{width:min(640px,100%);background:rgba(8,8,24,0.88);border:1px solid var(--bdr);border-radius:18px;padding:22px;box-shadow:0 18px 50px rgba(0,0,0,0.35)}
+.promo-title{font-family:var(--fd);font-size:28px;letter-spacing:3px;background:linear-gradient(135deg,var(--a1),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.promo-sub{margin-top:8px;color:var(--txt);font-size:15px;line-height:1.6}
+.promo-meta{margin-top:12px;color:var(--mut);font-size:12px;line-height:1.6}
+.promo-actions{margin-top:18px;display:flex;gap:10px;flex-wrap:wrap}
+.promo-btn{display:inline-flex;align-items:center;justify-content:center;padding:12px 16px;border-radius:10px;border:1px solid var(--a1);text-decoration:none;color:var(--txt);font-weight:700;letter-spacing:0.6px;background:rgba(79,195,247,0.08)}
+.promo-btn.primary{background:linear-gradient(135deg,var(--a1),var(--a2));color:#001018;border-color:transparent}
+.promo-note{margin-top:12px;font-size:12px;color:var(--mut)}
+
 /* ═══ ANIM ═══ */
 @keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
 .fu{animation:fadeUp 0.3s ease-out}
@@ -233,6 +244,19 @@ html,body{height:100%;height:100dvh;background:var(--bg0);color:var(--txt);font-
   <div class="sp-name">ELYSIUM</div>
   <div class="sp-sub">PERSONAL AI · YAKUP EKİNCİ</div>
   <div class="sp-prog"><div class="sp-fill"></div></div>
+</div>
+
+<div id="promo">
+  <div class="promo-card">
+    <div class="promo-title">ELYSIUM ANDROID</div>
+    <div class="promo-sub">Uygulama kapalı/açık fark etmeden alarm bildirimleri için native Android sürümünü indir.</div>
+    <div class="promo-meta">Bu sayfa geçici olarak resmi indirme ekranı. Store yayınından önce APK doğrudan sitemizden indiriliyor.</div>
+    <div class="promo-actions">
+      <a class="promo-btn primary" href="./downloads/elysium-android-debug.apk" download>APK İNDİR</a>
+      <a class="promo-btn" href="?app=1">Web Sürümünü Aç</a>
+    </div>
+    <div class="promo-note">Not: Android 13+ cihazlarda bildirim ve tam zamanlı alarm izinlerini açman gerekir.</div>
+  </div>
 </div>
 
 <div id="app">
@@ -524,17 +548,22 @@ function allAlarmItems() {
   return fixed.concat(custom);
 }
 
-function scheduleNativeAlarmIfPossible(item) {
-  try {
-    if (!item || !item.on) return;
-    if (window.AndroidBridge && typeof window.AndroidBridge.scheduleAlarm === 'function') {
-      window.AndroidBridge.scheduleAlarm(item.time, item.desc || 'Hatırlatma');
-    }
-  } catch(e) {}
+function isNativeAndroid() {
+  const b = window.AndroidBridge;
+  return !!(b && typeof b.syncAlarms === 'function');
 }
 
-function bootstrapNativeAlarms() {
-  allAlarmItems().forEach(scheduleNativeAlarmIfPossible);
+function syncNativeAlarmsToAndroid() {
+  try {
+    if (!isNativeAndroid()) return;
+    const payload = allAlarmItems().map(a => ({
+      id: (a.kind === 'custom' ? 'c-' : 'f-') + String(a.aid != null ? a.aid : a.id),
+      time: a.time,
+      label: (a.desc || 'Hatırlatma'),
+      on: !!a.on
+    }));
+    window.AndroidBridge.syncAlarms(JSON.stringify(payload));
+  } catch (e) {}
 }
 
 function buildCloudAlarmConfig(token) {
@@ -702,7 +731,25 @@ const safetyTimer = setTimeout(() => {
   }
 }, 5000);
 
+function shouldShowPromoPage() {
+  const params = new URLSearchParams(window.location.search || '');
+  const forceApp = params.get('app') === '1';
+  const inAndroidApp = !!(window.AndroidBridge && typeof window.AndroidBridge.syncAlarms === 'function');
+  return !forceApp && !inAndroidApp;
+}
+
 window.addEventListener('load', async () => {
+  if (shouldShowPromoPage()) {
+    clearTimeout(safetyTimer);
+    const splash = document.getElementById('splash');
+    const app = document.getElementById('app');
+    const promo = document.getElementById('promo');
+    if (app) app.style.display = 'none';
+    if (splash) splash.style.display = 'none';
+    if (promo) promo.style.display = 'flex';
+    return;
+  }
+
   setTheme(theme, false);
   initCanvas();
 
@@ -734,7 +781,6 @@ window.addEventListener('load', async () => {
   scheduleIntervalReminder();
   ensureFcmTokenSilently();
   queueCloudSync(2000);
-  bootstrapNativeAlarms();
   setInterval(scheduleAllAlarms, 60 * 60 * 1000); // reschedule every hour
 });
 
@@ -961,7 +1007,6 @@ function toggleAlarm(id) {
   document.getElementById('tg'+id).classList.toggle('on', ALARMS[id].on);
   S.set('alarms', ALARMS.map(a=>a.on));
   scheduleAllAlarms();
-  scheduleNativeAlarmIfPossible(ALARMS[id]);
   queueCloudSync();
 }
 
@@ -976,7 +1021,6 @@ function addCustomAlarm() {
   document.getElementById('caDesc').value = '';
   renderAlarms();
   scheduleAllAlarms();
-  scheduleNativeAlarmIfPossible(item);
   queueCloudSync();
 }
 
@@ -987,7 +1031,6 @@ function toggleCustomAlarm(id) {
   S.set('custom_alarms', customAlarms);
   renderAlarms();
   scheduleAllAlarms();
-  scheduleNativeAlarmIfPossible(item);
   queueCloudSync();
 }
 
@@ -1038,7 +1081,11 @@ function scheduleAllAlarms() {
   alarmTimers.forEach(clearTimeout);
   alarmTimers = [];
 
-  if (!('Notification' in window) || Notification.permission !== 'granted') return;
+  const nativeApp = isNativeAndroid();
+  if (nativeApp) syncNativeAlarmsToAndroid();
+
+  const webNotifOk = ('Notification' in window) && Notification.permission === 'granted';
+  if (!nativeApp && !webNotifOk) return;
 
   const now = new Date();
   allAlarmItems().forEach(a => {
@@ -1057,8 +1104,8 @@ function scheduleAllAlarms() {
     alarmTimers.push(tid);
   });
 
-  // Also send via SW for background support
-  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+  // Also send via SW for background support (HTTPS / destekleyen WebView)
+  if (webNotifOk && 'serviceWorker' in navigator && navigator.serviceWorker.controller) {
     allAlarmItems().forEach(a => {
       if (!a.on) return;
       const [h,m] = a.time.split(':').map(Number);
@@ -1117,6 +1164,13 @@ function scheduleIntervalReminder() {
 // NOTIFICATIONS
 // ══════════════════════════════════════
 async function reqNotif() {
+  if (isNativeAndroid()) {
+    updateNotifStatus();
+    scheduleAllAlarms();
+    scheduleIntervalReminder();
+    alert('Android uygulaması: bildirimler sistem üzerinden gelir (WebView file:// web bildirimi kullanmaz). Alarmlar kapalıysa veya bildirim gelmiyorsa: Ayarlar → Uygulamalar → Elysium → Bildirimler ve "Tam zamanlı alarmlar" iznini kontrol et.');
+    return;
+  }
   if (!('Notification' in window)) {
     alert('Bu cihaz bildirim API desteklemiyor.');
     updateNotifStatus();
@@ -1179,6 +1233,16 @@ async function reqNotif() {
 }
 
 function testNotif() {
+  if (isNativeAndroid()) {
+    try {
+      if (window.AndroidBridge && typeof window.AndroidBridge.showTestNotification === 'function') {
+        window.AndroidBridge.showTestNotification();
+      }
+    } catch (e) {}
+    playCallTone();
+    vibrate([300,100,300]);
+    return;
+  }
   if (!('Notification' in window)) { alert('Bu cihaz bildirim API desteklemiyor.'); return; }
   if (Notification.permission !== 'granted') { alert('Önce bildirim izni al!'); return; }
   playCallTone();
@@ -1194,7 +1258,13 @@ function testNotif() {
 
 function updateNotifStatus() {
   const el = document.getElementById('nstat');
-  if (!el || !('Notification' in window)) { if(el) el.textContent='Desteklenmiyor'; return; }
+  if (!el) return;
+  if (isNativeAndroid()) {
+    el.textContent = '✓ Android (sistem bildirimi)';
+    el.className = 'pv notif-ok';
+    return;
+  }
+  if (!('Notification' in window)) { el.textContent='Desteklenmiyor (WebView file://)'; return; }
   const s = {granted:'✓ Aktif',denied:'✗ Engellendi',default:'İzin Bekleniyor'};
   el.textContent = s[Notification.permission]||'—';
   el.className = 'pv ' + (Notification.permission==='granted'?'notif-ok':'notif-no');
