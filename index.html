@@ -773,7 +773,7 @@ function scheduleAllAlarms() {
   alarmTimers.forEach(clearTimeout);
   alarmTimers = [];
 
-  if (Notification.permission !== 'granted') return;
+  if (!('Notification' in window) || Notification.permission !== 'granted') return;
 
   const now = new Date();
   ALARMS.forEach(a => {
@@ -815,7 +815,7 @@ function fireAlarm(a) {
   b.classList.add('ringing'); setTimeout(()=>b.classList.remove('ringing'),800);
   b.classList.add('lit'); setTimeout(()=>b.classList.remove('lit'),5000);
 
-  if (Notification.permission==='granted') {
+  if ('Notification' in window && Notification.permission==='granted') {
     navigator.serviceWorker?.ready.then(reg => {
       reg.showNotification('⏰ Elysium Bot', {
         body: a.time + ' — ' + a.desc,
@@ -834,6 +834,11 @@ function fireAlarm(a) {
 // NOTIFICATIONS
 // ══════════════════════════════════════
 async function reqNotif() {
+  if (!('Notification' in window)) {
+    alert('Bu cihaz bildirim API desteklemiyor.');
+    updateNotifStatus();
+    return;
+  }
   const perm = await Notification.requestPermission();
   updateNotifStatus();
   if (perm === 'granted') {
@@ -854,6 +859,7 @@ async function reqNotif() {
 }
 
 function testNotif() {
+  if (!('Notification' in window)) { alert('Bu cihaz bildirim API desteklemiyor.'); return; }
   if (Notification.permission !== 'granted') { alert('Önce bildirim izni al!'); return; }
   navigator.serviceWorker?.ready.then(reg => {
     reg.showNotification('✅ Test Başarılı!', {
