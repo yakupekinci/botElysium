@@ -377,6 +377,30 @@ html,body{height:100%;height:100dvh;background:var(--bg0);color:var(--txt);font-
         <button onclick="reqNotif()" style="width:100%;padding:11px;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px;color:var(--a1);font-family:var(--fd);font-size:9px;letter-spacing:2px;cursor:pointer;margin-top:8px">BİLDİRİM İZNİ AL + KAYIT</button>
         <button onclick="testNotif()" style="width:100%;padding:11px;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px;color:var(--a2);font-family:var(--fd);font-size:9px;letter-spacing:2px;cursor:pointer;margin-top:6px">TEST BİLDİRİMİ GÖNDER</button>
       </div>
+      <div class="card"><div class="clbl">ÖZEL HATIRLATICI</div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <input id="caTime" type="time" style="padding:10px;border-radius:8px;background:var(--bg3);border:1px solid var(--bdr);color:var(--txt)">
+          <select id="caMode" style="padding:10px;border-radius:8px;background:var(--bg3);border:1px solid var(--bdr);color:var(--txt)">
+            <option value="normal">⏰ Normal</option>
+            <option value="call">📞 Arama Gibi</option>
+          </select>
+        </div>
+        <input id="caDesc" type="text" placeholder="Örn: Su iç, 10 dk yürüyüş" style="width:100%;margin-top:8px;padding:10px;border-radius:8px;background:var(--bg3);border:1px solid var(--bdr);color:var(--txt)">
+        <button onclick="addCustomAlarm()" style="width:100%;padding:11px;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px;color:var(--a1);font-family:var(--fd);font-size:9px;letter-spacing:2px;cursor:pointer;margin-top:8px">SAATLİ ALARM EKLE</button>
+        <div style="height:1px;background:var(--bdr);margin:12px 0"></div>
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+          <input id="irMin" type="number" min="1" step="1" placeholder="Dakika" style="padding:10px;border-radius:8px;background:var(--bg3);border:1px solid var(--bdr);color:var(--txt)">
+          <select id="irMode" style="padding:10px;border-radius:8px;background:var(--bg3);border:1px solid var(--bdr);color:var(--txt)">
+            <option value="normal">⏰ Normal</option>
+            <option value="call">📞 Arama Gibi</option>
+          </select>
+        </div>
+        <input id="irDesc" type="text" placeholder="Örn: Postür düzelt, nefes al" style="width:100%;margin-top:8px;padding:10px;border-radius:8px;background:var(--bg3);border:1px solid var(--bdr);color:var(--txt)">
+        <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px">
+          <button onclick="setIntervalReminder()" style="padding:11px;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px;color:var(--ok);font-family:var(--fd);font-size:9px;letter-spacing:2px;cursor:pointer">DÖNGÜYÜ BAŞLAT</button>
+          <button onclick="stopIntervalReminder()" style="padding:11px;background:rgba(255,68,68,0.07);border:1px solid rgba(255,68,68,0.2);border-radius:8px;color:var(--bad);font-family:var(--fd);font-size:9px;letter-spacing:2px;cursor:pointer">DÖNGÜYÜ DURDUR</button>
+        </div>
+      </div>
       <div class="card"><div class="clbl">GÖREVLERİ SIFIRLA</div>
         <button onclick="resetAll()" style="width:100%;padding:11px;background:rgba(255,68,68,0.07);border:1px solid rgba(255,68,68,0.2);border-radius:8px;color:var(--bad);font-family:var(--fd);font-size:9px;letter-spacing:2px;cursor:pointer">TÜM İLERLEMEYİ SİL</button>
       </div>
@@ -444,12 +468,18 @@ function fcmEnvIssue() {
 }
 
 function fcmErrorText(err) {
-  const code = err?.code || '';
+  const code = String(err?.code || '');
   if (code.includes('unsupported-browser')) return 'Tarayıcı FCM desteklemiyor';
   if (code.includes('permission-blocked') || code.includes('permission-default')) return 'Bildirim izni verilmedi';
   if (code.includes('token-subscribe-failed')) return 'Push aboneliği başarısız (tarayıcı engeli olabilir)';
   if (code.includes('failed-service-worker-registration')) return 'Service Worker kaydı hatalı';
   return err?.message ? ('Hata: ' + err.message) : 'Bilinmeyen hata';
+}
+
+function allAlarmItems() {
+  const fixed = ALARMS.map(a => ({ ...a, kind:'fixed', aid:String(a.id) }));
+  const custom = customAlarms.map(a => ({ ...a, kind:'custom', aid:String(a.id) }));
+  return fixed.concat(custom);
 }
 
 // ══════════════════════════════════════
@@ -470,6 +500,8 @@ const ALARMS = [
   {id:3, time:'19:00', desc:'ALES ÇALIŞMA ⚡'},
   {id:4, time:'23:00', desc:'EKRANI KAPAT'},
 ];
+let customAlarms = S.get('custom_alarms', []);
+let intervalReminder = S.get('interval_reminder', { on:false, minutes:30, desc:'Kısa mola ver', mode:'normal' });
 
 const PLAN = [
   {t:'08:30', title:'Uyan, yüzünü yıka, su iç', sub:'Telefona bakma — 10 dk hareket et', c:'#66bb6a'},
@@ -581,10 +613,12 @@ window.addEventListener('load', async () => {
   renderPlan();
   renderTasks();
   renderAlarms();
+  hydrateReminderInputs();
   renderToday();
   updateStats();
   updateNotifStatus();
   scheduleAllAlarms();
+  scheduleIntervalReminder();
   setInterval(scheduleAllAlarms, 60 * 60 * 1000); // reschedule every hour
 });
 
@@ -775,7 +809,7 @@ function closeSheet() { document.getElementById('alarmSheet').classList.remove('
 function closeIfBg(e) { if(e.target===document.getElementById('alarmSheet')) closeSheet(); }
 
 function renderAlarms() {
-  document.getElementById('alarmDom').innerHTML = ALARMS.map(a=>`
+  const fixedHtml = ALARMS.map(a=>`
     <div class="arow">
       <div class="ainfo">
         <div class="atime">${a.time}</div>
@@ -783,6 +817,27 @@ function renderAlarms() {
       </div>
       <div class="tgl${a.on?' on':''}" id="tg${a.id}" onclick="toggleAlarm(${a.id})"></div>
     </div>`).join('');
+
+  const customHtml = customAlarms.map(a=>`
+    <div class="arow">
+      <div class="ainfo">
+        <div class="atime">${a.time}</div>
+        <div class="adesc">${a.mode==='call'?'📞 ':'⏰ '}${a.desc}</div>
+      </div>
+      <div style="display:flex;align-items:center;gap:8px">
+        <div class="tgl${a.on?' on':''}" onclick="toggleCustomAlarm('${a.id}')"></div>
+        <button onclick="deleteCustomAlarm('${a.id}')" style="padding:7px 9px;border-radius:8px;background:rgba(255,68,68,0.08);color:var(--bad);border:1px solid rgba(255,68,68,0.2);font-size:10px;cursor:pointer">Sil</button>
+      </div>
+    </div>`).join('');
+
+  const intervalTxt = intervalReminder.on
+    ? `Açık · ${intervalReminder.minutes} dk · ${intervalReminder.mode==='call'?'📞':'⏰'} ${intervalReminder.desc}`
+    : 'Kapalı';
+
+  document.getElementById('alarmDom').innerHTML =
+    `<div class="adesc" style="margin-bottom:8px;letter-spacing:1px">SABİT ALARMLAR</div>${fixedHtml}` +
+    `<div class="adesc" style="margin:14px 0 8px;letter-spacing:1px">ÖZEL ALARMLAR</div>${customHtml || '<div class="adesc">Henüz özel alarm yok</div>'}` +
+    `<div class="adesc" style="margin:14px 0 2px;letter-spacing:1px">DÖNGÜSEL HATIRLATICI: ${intervalTxt}</div>`;
 }
 
 function toggleAlarm(id) {
@@ -790,6 +845,65 @@ function toggleAlarm(id) {
   document.getElementById('tg'+id).classList.toggle('on', ALARMS[id].on);
   S.set('alarms', ALARMS.map(a=>a.on));
   scheduleAllAlarms();
+}
+
+function addCustomAlarm() {
+  const t = document.getElementById('caTime')?.value;
+  const d = (document.getElementById('caDesc')?.value || '').trim();
+  const mode = document.getElementById('caMode')?.value || 'normal';
+  if (!t || !d) { alert('Saat ve açıklama gir.'); return; }
+  const item = { id: Date.now().toString(36), time:t, desc:d, mode, on:true };
+  customAlarms.push(item);
+  S.set('custom_alarms', customAlarms);
+  document.getElementById('caDesc').value = '';
+  renderAlarms();
+  scheduleAllAlarms();
+}
+
+function toggleCustomAlarm(id) {
+  const item = customAlarms.find(a => a.id === id);
+  if (!item) return;
+  item.on = !item.on;
+  S.set('custom_alarms', customAlarms);
+  renderAlarms();
+  scheduleAllAlarms();
+}
+
+function deleteCustomAlarm(id) {
+  customAlarms = customAlarms.filter(a => a.id !== id);
+  S.set('custom_alarms', customAlarms);
+  renderAlarms();
+  scheduleAllAlarms();
+}
+
+function hydrateReminderInputs() {
+  const minEl = document.getElementById('irMin');
+  const descEl = document.getElementById('irDesc');
+  const modeEl = document.getElementById('irMode');
+  if (minEl) minEl.value = intervalReminder.minutes || 30;
+  if (descEl) descEl.value = intervalReminder.desc || '';
+  if (modeEl) modeEl.value = intervalReminder.mode || 'normal';
+}
+
+let intervalTimer = null;
+function setIntervalReminder() {
+  const m = parseInt(document.getElementById('irMin')?.value || '0', 10);
+  const d = (document.getElementById('irDesc')?.value || '').trim();
+  const mode = document.getElementById('irMode')?.value || 'normal';
+  if (!m || m < 1) { alert('Dakika 1 veya daha büyük olmalı.'); return; }
+  if (!d) { alert('Hatırlatıcı metni gir.'); return; }
+  intervalReminder = { on:true, minutes:m, desc:d, mode };
+  S.set('interval_reminder', intervalReminder);
+  scheduleIntervalReminder();
+  renderAlarms();
+}
+
+function stopIntervalReminder() {
+  intervalReminder.on = false;
+  S.set('interval_reminder', intervalReminder);
+  if (intervalTimer) clearInterval(intervalTimer);
+  intervalTimer = null;
+  renderAlarms();
 }
 
 // ══════════════════════════════════════
@@ -802,7 +916,7 @@ function scheduleAllAlarms() {
   if (!('Notification' in window) || Notification.permission !== 'granted') return;
 
   const now = new Date();
-  ALARMS.forEach(a => {
+  allAlarmItems().forEach(a => {
     if (!a.on) return;
     const [h, m] = a.time.split(':').map(Number);
     const target = new Date();
@@ -820,14 +934,14 @@ function scheduleAllAlarms() {
 
   // Also send via SW for background support
   if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
-    ALARMS.forEach(a => {
+    allAlarmItems().forEach(a => {
       if (!a.on) return;
       const [h,m] = a.time.split(':').map(Number);
       const target = new Date(); target.setHours(h,m,0,0);
       if (target <= now) target.setDate(target.getDate()+1);
       const delay = target - now;
       navigator.serviceWorker.controller.postMessage({
-        type:'SCHEDULE_ALARM', delay, alarmId: a.id,
+        type:'SCHEDULE_ALARM', delay, alarmId: a.aid || a.id,
         title:'⏰ Elysium Bot', body: a.time + ' — ' + a.desc
       });
     });
@@ -835,7 +949,8 @@ function scheduleAllAlarms() {
 }
 
 function fireAlarm(a) {
-  playAlarm();
+  if (a?.mode === 'call') playCallTone();
+  else playAlarm();
   vibrate([400,150,400,150,400,150,400]);
   const b = document.getElementById('abtn');
   b.classList.add('ringing'); setTimeout(()=>b.classList.remove('ringing'),800);
@@ -843,6 +958,7 @@ function fireAlarm(a) {
 
   if ('Notification' in window && Notification.permission==='granted') {
     navigator.serviceWorker?.ready.then(reg => {
+      if (!reg?.active) throw new Error('No active SW registration');
       reg.showNotification('⏰ Elysium Bot', {
         body: a.time + ' — ' + a.desc,
         icon:'./icon.svg', badge:'./icon.svg',
@@ -854,6 +970,22 @@ function fireAlarm(a) {
       new Notification('⏰ Elysium Bot', { body: a.time+' — '+(a.desc||'Alarm'), icon:'./icon.svg' });
     });
   }
+}
+
+function scheduleIntervalReminder() {
+  if (intervalTimer) clearInterval(intervalTimer);
+  intervalTimer = null;
+  if (!intervalReminder.on) return;
+  const ms = Math.max(60000, Number(intervalReminder.minutes || 1) * 60000);
+  intervalTimer = setInterval(() => {
+    const payload = {
+      time: new Date().toLocaleTimeString('tr-TR', { hour:'2-digit', minute:'2-digit' }),
+      desc: intervalReminder.desc || 'Hatırlatma',
+      id: 'interval',
+      mode: intervalReminder.mode || 'normal'
+    };
+    fireAlarm(payload);
+  }, ms);
 }
 
 // ══════════════════════════════════════
@@ -888,6 +1020,7 @@ async function reqNotif() {
     await firebaseReadyPromise;
   }
   scheduleAllAlarms();
+  scheduleIntervalReminder();
   // Try Firebase token
   try {
     if (window._fbMessaging) {
@@ -917,6 +1050,7 @@ function testNotif() {
   if (!('Notification' in window)) { alert('Bu cihaz bildirim API desteklemiyor.'); return; }
   if (Notification.permission !== 'granted') { alert('Önce bildirim izni al!'); return; }
   navigator.serviceWorker?.ready.then(reg => {
+    if (!reg?.active) throw new Error('No active SW registration');
     reg.showNotification('✅ Test Başarılı!', {
       body:'Elysium Bot bildirimleri çalışıyor.',
       icon:'./icon.svg', vibrate:[300,100,300]
@@ -1119,6 +1253,25 @@ function playAlarm() {
       g.gain.linearRampToValueAtTime(0.4,t+0.02);
       g.gain.exponentialRampToValueAtTime(0.0001,t+0.16);
       o.start(t); o.stop(t+0.17);
+    });
+  } catch(e){}
+}
+
+function playCallTone() {
+  try {
+    if (!AC) AC = new (window.AudioContext||window.webkitAudioContext)();
+    if (AC.state==='suspended') AC.resume();
+    const pulses = [660,0,660,0,660,0,660,0];
+    pulses.forEach((f,i)=>{
+      if (!f) return;
+      const o=AC.createOscillator(), g=AC.createGain();
+      o.connect(g); g.connect(AC.destination);
+      o.type='sine'; o.frequency.value=f;
+      const t=AC.currentTime+i*0.35;
+      g.gain.setValueAtTime(0,t);
+      g.gain.linearRampToValueAtTime(0.5,t+0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001,t+0.28);
+      o.start(t); o.stop(t+0.29);
     });
   } catch(e){}
 }

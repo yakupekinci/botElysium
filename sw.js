@@ -1,5 +1,5 @@
 /* Elysium Bot SW v3 - Firebase optional */
-const CACHE = 'elysium-v5';
+const CACHE = 'elysium-v6';
 const ASSETS = ['./', './index.html', './manifest.webmanifest', './icon.svg'];
 
 /* Try Firebase — if CDN fails, SW still works */
