@@ -11,762 +11,1067 @@
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icon.svg">
 <title>Elysium Bot</title>
-<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;600;900&family=Rajdhani:wght@300;400;600&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Cinzel:wght@400;700;900&family=Rajdhani:wght@400;500;600&family=Orbitron:wght@400;700;900&display=swap" rel="stylesheet">
 <style>
-/* ===== THEMES ===== */
-[data-theme="cosmos"] {
-  --bg0:#050510;--bg1:#0a0a1a;--bg2:#0f0f25;--bg3:#141430;
-  --accent:#4fc3f7;--accent2:#7c4dff;--accent3:#e040fb;
-  --gold:#ffd700;--danger:#ff4444;--ok:#00e676;
-  --text:#e8eaf6;--muted:#5c6bc0;--border:rgba(79,195,247,0.15);
-  --glow:rgba(79,195,247,0.3);--font-display:'Orbitron';--font-body:'Rajdhani';
+/* ═══ THEMES ═══ */
+[data-theme="cosmos"]{
+  --bg0:#050510;--bg1:#080818;--bg2:#0d0d22;--bg3:#12122c;
+  --a1:#4fc3f7;--a2:#7c4dff;--a3:#e040fb;
+  --ok:#00e676;--bad:#ff4444;--warn:#ffa000;
+  --txt:#e8eaf6;--mut:#4a5080;--bdr:rgba(79,195,247,0.12);
+  --glow:rgba(79,195,247,0.25);--glow2:rgba(124,77,255,0.2);
+  --fd:'Orbitron';--fb:'Rajdhani';
 }
-[data-theme="ember"] {
-  --bg0:#0d0500;--bg1:#180a00;--bg2:#221000;--bg3:#2c1500;
-  --accent:#ff6d00;--accent2:#ff9100;--accent3:#ffea00;
-  --gold:#ffd700;--danger:#ff1744;--ok:#76ff03;
-  --text:#fff8e1;--muted:#8d6e63;--border:rgba(255,109,0,0.2);
-  --glow:rgba(255,109,0,0.35);--font-display:'Cinzel';--font-body:'Rajdhani';
+[data-theme="ember"]{
+  --bg0:#080200;--bg1:#120500;--bg2:#1a0800;--bg3:#240b00;
+  --a1:#ff6d00;--a2:#ffb300;--a3:#ff3d00;
+  --ok:#aeea00;--bad:#ff1744;--warn:#ffd740;
+  --txt:#fff8e1;--mut:#7d5a40;--bdr:rgba(255,109,0,0.18);
+  --glow:rgba(255,109,0,0.3);--glow2:rgba(255,179,0,0.2);
+  --fd:'Cinzel';--fb:'Rajdhani';
 }
-[data-theme="void"] {
-  --bg0:#000000;--bg1:#080808;--bg2:#101010;--bg3:#181818;
-  --accent:#e0e0e0;--accent2:#9e9e9e;--accent3:#616161;
-  --gold:#fafafa;--danger:#ef5350;--ok:#66bb6a;
-  --text:#eeeeee;--muted:#616161;--border:rgba(224,224,224,0.1);
-  --glow:rgba(255,255,255,0.15);--font-display:'Cinzel';--font-body:'Rajdhani';
+[data-theme="void"]{
+  --bg0:#000;--bg1:#080808;--bg2:#0f0f0f;--bg3:#161616;
+  --a1:#e8e8e8;--a2:#aaaaaa;--a3:#777;
+  --ok:#69f0ae;--bad:#ef5350;--warn:#ffca28;
+  --txt:#efefef;--mut:#4a4a4a;--bdr:rgba(220,220,220,0.08);
+  --glow:rgba(232,232,232,0.12);--glow2:rgba(170,170,170,0.1);
+  --fd:'Cinzel';--fb:'Rajdhani';
 }
 
-/* ===== RESET ===== */
-*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent}
-html,body{height:100%;background:var(--bg0);color:var(--text);font-family:var(--font-body),'Rajdhani',sans-serif;overflow:hidden;transition:background 0.5s}
+/* ═══ BASE ═══ */
+*{box-sizing:border-box;margin:0;padding:0;-webkit-tap-highlight-color:transparent;-webkit-touch-callout:none}
+html,body{height:100%;height:100dvh;background:var(--bg0);color:var(--txt);font-family:var(--fb),'Rajdhani',sans-serif;overflow:hidden;user-select:none}
 
-/* ===== PARTICLES ===== */
-#particles{position:fixed;inset:0;pointer-events:none;z-index:0;overflow:hidden}
-.particle{position:absolute;border-radius:50%;animation:float linear infinite;opacity:0}
-@keyframes float{0%{transform:translateY(100vh) scale(0);opacity:0}10%{opacity:1}90%{opacity:0.5}100%{transform:translateY(-10vh) scale(1.5);opacity:0}}
+/* ═══ CANVAS BG ═══ */
+#bgc{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.35}
 
-/* ===== SPLASH ===== */
-#splash{position:fixed;inset:0;background:var(--bg0);display:flex;flex-direction:column;align-items:center;justify-content:center;z-index:9999;transition:opacity 0.8s}
-.splash-ring{width:120px;height:120px;border-radius:50%;border:1px solid var(--accent);position:relative;animation:spin 4s linear infinite}
-.splash-ring::before{content:'';position:absolute;inset:8px;border-radius:50%;border:1px solid var(--accent2);animation:spin 2s linear infinite reverse}
-.splash-ring::after{content:'E';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--font-display);font-size:48px;font-weight:900;color:var(--accent);text-shadow:0 0 20px var(--glow)}
-@keyframes spin{to{transform:rotate(360deg)}}
-.splash-title{font-family:var(--font-display);font-size:22px;font-weight:900;letter-spacing:6px;color:var(--accent);margin-top:24px;text-shadow:0 0 20px var(--glow)}
-.splash-sub{font-size:11px;color:var(--muted);letter-spacing:4px;margin-top:8px}
-.splash-bar{width:200px;height:2px;background:var(--bg3);border-radius:1px;margin-top:24px;overflow:hidden}
-.splash-bar-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));animation:load 1.8s ease-out forwards}
-@keyframes load{from{width:0}to{width:100%}}
+/* ═══ SPLASH ═══ */
+#splash{position:fixed;inset:0;background:var(--bg0);z-index:9999;display:flex;flex-direction:column;align-items:center;justify-content:center;transition:opacity 0.9s}
+#splash.gone{opacity:0;pointer-events:none}
+.sp-outer{width:130px;height:130px;border-radius:50%;border:1px solid var(--a1);animation:rot 5s linear infinite;position:relative;flex-shrink:0}
+.sp-outer::before{content:'';position:absolute;inset:10px;border-radius:50%;border:1px solid var(--a2);animation:rot 3s linear infinite reverse}
+.sp-e{position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-family:var(--fd);font-size:56px;font-weight:900;background:linear-gradient(135deg,var(--a1),var(--a2),var(--a3));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+@keyframes rot{to{transform:rotate(360deg)}}
+.sp-name{font-family:var(--fd);font-size:24px;font-weight:900;letter-spacing:8px;margin-top:22px;background:linear-gradient(135deg,var(--a1),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;text-shadow:none}
+.sp-sub{font-size:10px;color:var(--mut);letter-spacing:4px;margin-top:6px}
+.sp-prog{width:180px;height:2px;background:var(--bg3);border-radius:1px;margin-top:28px;overflow:hidden}
+.sp-fill{height:100%;background:linear-gradient(90deg,var(--a1),var(--a2),var(--a3));border-radius:1px;width:0;animation:prog 2s cubic-bezier(0.4,0,0.2,1) forwards}
+@keyframes prog{to{width:100%}}
 
-/* ===== APP ===== */
-#app{height:100vh;height:100dvh;display:flex;flex-direction:column;position:relative;z-index:1;opacity:0;transition:opacity 0.5s}
-#app.visible{opacity:1}
+/* ═══ APP ═══ */
+#app{height:100dvh;display:flex;flex-direction:column;position:relative;z-index:1;opacity:0;transition:opacity 0.6s}
+#app.on{opacity:1}
 
-/* ===== HEADER ===== */
-.header{padding:env(safe-area-inset-top,12px) 16px 12px;background:var(--bg1);border-bottom:1px solid var(--border);display:flex;align-items:center;gap:12px;flex-shrink:0;position:relative}
-.header::after{content:'';position:absolute;bottom:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),var(--accent2),transparent)}
-.header-logo{font-family:var(--font-display);font-size:20px;font-weight:900;letter-spacing:3px;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
-.header-time{font-family:var(--font-display);font-size:13px;color:var(--muted);letter-spacing:2px;flex:1;text-align:center}
-.header-btns{display:flex;gap:8px}
-.hbtn{width:36px;height:36px;border-radius:50%;border:1px solid var(--border);background:var(--bg2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:16px;transition:all 0.2s}
-.hbtn:active{transform:scale(0.9)}
-.hbtn.playing{border-color:var(--accent);box-shadow:0 0 12px var(--glow)}
+/* ═══ HEADER ═══ */
+.hdr{padding:calc(env(safe-area-inset-top,0px) + 10px) 14px 10px;background:var(--bg1);border-bottom:1px solid var(--bdr);display:flex;align-items:center;gap:10px;flex-shrink:0;position:relative}
+.hdr::after{content:'';position:absolute;bottom:-1px;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--a1) 30%,var(--a2) 70%,transparent);opacity:0.6}
+.hdr-logo{font-family:var(--fd);font-size:18px;font-weight:900;letter-spacing:4px;background:linear-gradient(135deg,var(--a1),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.hdr-clock{font-family:var(--fd);font-size:12px;color:var(--mut);letter-spacing:2px;flex:1;text-align:center}
+.hdr-btns{display:flex;gap:6px}
+.hbtn{width:34px;height:34px;border-radius:50%;border:1px solid var(--bdr);background:var(--bg2);display:flex;align-items:center;justify-content:center;cursor:pointer;font-size:15px;transition:all 0.2s;flex-shrink:0}
+.hbtn:active{transform:scale(0.88)}
+.hbtn.lit{border-color:var(--a1);box-shadow:0 0 10px var(--glow),0 0 20px var(--glow)}
+@keyframes bellring{0%,100%{transform:rotate(0)}10%{transform:rotate(-22deg)}25%{transform:rotate(22deg)}40%{transform:rotate(-16deg)}55%{transform:rotate(16deg)}70%{transform:rotate(-6deg)}}
+.ringing{animation:bellring 0.8s ease-in-out}
 
-/* ===== TABS ===== */
-.tabs{display:flex;background:var(--bg1);border-bottom:1px solid var(--border);flex-shrink:0;overflow-x:auto;scrollbar-width:none;padding:0 4px}
+/* ═══ TABS ═══ */
+.tabs{display:flex;background:var(--bg1);border-bottom:1px solid var(--bdr);flex-shrink:0;overflow-x:auto;scrollbar-width:none}
 .tabs::-webkit-scrollbar{display:none}
-.tab{flex:1;min-width:60px;padding:10px 4px;font-family:var(--font-display);font-size:8px;letter-spacing:1.5px;text-transform:uppercase;text-align:center;cursor:pointer;color:var(--muted);border:none;background:none;border-bottom:2px solid transparent;transition:all 0.2s;white-space:nowrap}
-.tab.active{color:var(--accent);border-bottom-color:var(--accent);text-shadow:0 0 8px var(--glow)}
+.tb{flex:1;min-width:56px;padding:9px 2px;font-family:var(--fd);font-size:7.5px;letter-spacing:1.5px;text-transform:uppercase;text-align:center;cursor:pointer;color:var(--mut);border:none;background:none;border-bottom:2px solid transparent;transition:all 0.2s;white-space:nowrap}
+.tb.on{color:var(--a1);border-bottom-color:var(--a1)}
 
-/* ===== CONTENT ===== */
-.content{flex:1;overflow-y:auto;padding:14px 14px calc(14px + env(safe-area-inset-bottom));scrollbar-width:thin;scrollbar-color:var(--border) transparent}
+/* ═══ CONTENT ═══ */
+.cnt{flex:1;overflow-y:auto;overflow-x:hidden;padding:12px 12px calc(16px + env(safe-area-inset-bottom,0px));scrollbar-width:thin;scrollbar-color:var(--bdr) transparent}
+.cnt::-webkit-scrollbar{width:2px}
+.cnt::-webkit-scrollbar-thumb{background:var(--bdr);border-radius:1px}
 
-/* ===== CARDS ===== */
-.card{background:var(--bg2);border:1px solid var(--border);border-radius:14px;padding:14px 16px;margin-bottom:10px;position:relative;overflow:hidden}
-.card::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,var(--accent),transparent);opacity:0.5}
-.card-label{font-family:var(--font-display);font-size:8px;letter-spacing:3px;color:var(--muted);text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px}
-.card-label::after{content:'';flex:1;height:1px;background:var(--border)}
+/* ═══ CARDS ═══ */
+.card{background:var(--bg2);border:1px solid var(--bdr);border-radius:14px;padding:13px 14px;margin-bottom:9px;position:relative;overflow:hidden}
+.card::before{content:'';position:absolute;top:0;left:20%;right:20%;height:1px;background:linear-gradient(90deg,transparent,var(--a1),var(--a2),transparent);opacity:0.4}
+.clbl{font-family:var(--fd);font-size:7.5px;letter-spacing:3px;color:var(--mut);text-transform:uppercase;margin-bottom:10px;display:flex;align-items:center;gap:8px}
+.clbl::after{content:'';flex:1;height:1px;background:var(--bdr)}
 
-/* ===== COUNTDOWN ===== */
-.cd-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-.cd-box{background:var(--bg3);border-radius:10px;padding:10px 4px;text-align:center;border:1px solid var(--border);position:relative;overflow:hidden}
-.cd-box::after{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--glow) 0%,transparent 60%);opacity:0.2}
-.cd-num{font-family:var(--font-display);font-size:28px;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
-.cd-label{font-size:8px;color:var(--muted);letter-spacing:2px;margin-top:3px}
+/* ═══ COUNTDOWN ═══ */
+.cdg{display:grid;grid-template-columns:repeat(4,1fr);gap:7px}
+.cdb{background:var(--bg3);border-radius:10px;padding:9px 3px;text-align:center;border:1px solid var(--bdr);position:relative;overflow:hidden}
+.cdn{font-family:var(--fd);font-size:26px;font-weight:900;line-height:1;background:linear-gradient(135deg,var(--a1),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.cdl{font-size:7px;color:var(--mut);letter-spacing:2px;margin-top:2px}
 
-/* ===== PROGRESS ===== */
-.prog-wrap{margin:10px 0 4px}
-.prog-row{display:flex;justify-content:space-between;font-size:10px;color:var(--muted);margin-bottom:6px}
-.prog-bar{height:3px;background:var(--bg3);border-radius:2px;overflow:hidden}
-.prog-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2),var(--accent3));border-radius:2px;transition:width 1.5s cubic-bezier(0.4,0,0.2,1);position:relative}
-.prog-fill::after{content:'';position:absolute;right:0;top:-2px;width:8px;height:8px;border-radius:50%;background:var(--accent);box-shadow:0 0 8px var(--glow)}
+/* ═══ PROGRESS ═══ */
+.pwrap{margin:10px 0 2px}
+.prow{display:flex;justify-content:space-between;font-size:10px;color:var(--mut);margin-bottom:5px}
+.pbar{height:3px;background:var(--bg3);border-radius:2px;overflow:visible;position:relative}
+.pfill{height:100%;background:linear-gradient(90deg,var(--a1),var(--a2),var(--a3));border-radius:2px;transition:width 1.8s cubic-bezier(0.4,0,0.2,1);position:relative;min-width:0}
+.pfill::after{content:'';position:absolute;right:-4px;top:-4px;width:10px;height:10px;border-radius:50%;background:var(--a1);box-shadow:0 0 10px var(--glow),0 0 20px var(--glow)}
 
-/* ===== STATS ===== */
-.stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:10px}
-.stat-box{background:var(--bg2);border:1px solid var(--border);border-radius:10px;padding:10px 8px;text-align:center}
-.stat-num{font-family:var(--font-display);font-size:26px;font-weight:900;background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text;line-height:1}
-.stat-lbl{font-size:8px;color:var(--muted);letter-spacing:2px;margin-top:2px}
+/* ═══ STATS ═══ */
+.sgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px;margin-bottom:9px}
+.sb{background:var(--bg2);border:1px solid var(--bdr);border-radius:10px;padding:9px 6px;text-align:center}
+.sn{font-family:var(--fd);font-size:24px;font-weight:900;line-height:1;background:linear-gradient(135deg,var(--a1),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+.sl{font-size:7px;color:var(--mut);letter-spacing:2px;margin-top:2px}
 
-/* ===== TASKS ===== */
-.task{display:flex;align-items:flex-start;gap:10px;padding:11px 0;border-bottom:1px solid rgba(255,255,255,0.04);cursor:pointer;transition:opacity 0.3s}
+/* ═══ TODAY CARD ═══ */
+.today{background:linear-gradient(135deg,var(--bg2),var(--bg3));border:1px solid var(--a1);border-radius:14px;padding:14px;margin-bottom:9px;position:relative;overflow:hidden}
+.today::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 20% 50%,var(--glow),transparent 60%);pointer-events:none}
+.today-badge{font-family:var(--fd);font-size:7px;letter-spacing:3px;color:var(--a1);margin-bottom:6px}
+.today-main{font-size:14px;font-weight:600;line-height:1.65;color:var(--txt)}
+.today-next{font-size:10px;color:var(--mut);margin-top:8px;line-height:1.6}
+.today-day{font-family:var(--fd);font-size:9px;color:var(--a2);margin-bottom:8px;letter-spacing:2px}
+
+/* ═══ ENERGY ═══ */
+.erow{display:flex;align-items:center;gap:9px;margin-bottom:7px}
+.elbl{font-size:9px;color:var(--mut);width:36px;flex-shrink:0;font-family:var(--fd);letter-spacing:1px}
+.ebar{flex:1;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden}
+.efill{height:100%;border-radius:2px}
+.epct{font-size:8px;width:26px;text-align:right;flex-shrink:0}
+
+/* ═══ TASKS ═══ */
+.task{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.035);cursor:pointer;transition:opacity 0.25s}
 .task:last-child{border-bottom:none}
-.task.done{opacity:0.4}
-.task-chk{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--border);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all 0.25s;background:var(--bg3)}
-.task.done .task-chk{background:var(--ok);border-color:var(--ok)}
-.task.done .task-chk::after{content:'✓';font-size:12px;color:#000;font-weight:bold}
-.task-body{flex:1;min-width:0}
-.task-title{font-size:13px;color:var(--text);line-height:1.4;font-weight:600}
-.task.done .task-title{text-decoration:line-through;color:var(--muted)}
-.task-sub{font-size:10px;color:var(--muted);margin-top:3px;line-height:1.5}
-.badge{font-size:8px;padding:3px 8px;border-radius:4px;letter-spacing:1px;flex-shrink:0;font-family:var(--font-display)}
-.b-fire{background:rgba(255,68,68,0.12);color:var(--danger);border:1px solid rgba(255,68,68,0.2)}
-.b-amber{background:rgba(255,160,0,0.1);color:#ffa000;border:1px solid rgba(255,160,0,0.2)}
-.b-green{background:rgba(0,230,118,0.08);color:var(--ok);border:1px solid rgba(0,230,118,0.15)}
-.b-gray{background:rgba(100,100,100,0.1);color:var(--muted);border:1px solid var(--border)}
+.task.done{opacity:0.38}
+.tchk{width:22px;height:22px;border-radius:50%;border:1.5px solid var(--bdr);flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all 0.25s;background:var(--bg3)}
+.task.done .tchk{background:var(--ok);border-color:var(--ok)}
+.task.done .tchk::after{content:'✓';font-size:11px;color:#000;font-weight:900}
+.tbody{flex:1;min-width:0}
+.ttitle{font-size:13px;font-weight:600;line-height:1.4;color:var(--txt)}
+.task.done .ttitle{text-decoration:line-through;color:var(--mut)}
+.tsub{font-size:10px;color:var(--mut);margin-top:2px;line-height:1.5}
+.bdg{font-size:7.5px;padding:3px 7px;border-radius:4px;letter-spacing:1px;flex-shrink:0;font-family:var(--fd);margin-top:2px}
+.bfire{background:rgba(255,68,68,0.1);color:#ff5252;border:1px solid rgba(255,68,68,0.2)}
+.bamb{background:rgba(255,160,0,0.08);color:#ffb300;border:1px solid rgba(255,160,0,0.18)}
+.bgre{background:rgba(0,230,118,0.07);color:var(--ok);border:1px solid rgba(0,230,118,0.15)}
+.bgry{background:rgba(120,120,120,0.08);color:var(--mut);border:1px solid var(--bdr)}
 
-/* ===== SECTION HEADER ===== */
-.sh{font-family:var(--font-display);font-size:9px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;margin:14px 0 8px;display:flex;align-items:center;gap:8px}
-.sh::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--border),transparent)}
+/* ═══ SECTION HEAD ═══ */
+.sh{font-family:var(--fd);font-size:8px;letter-spacing:3px;color:var(--a1);text-transform:uppercase;margin:14px 0 7px;display:flex;align-items:center;gap:8px}
+.sh::after{content:'';flex:1;height:1px;background:linear-gradient(90deg,var(--bdr),transparent)}
 
-/* ===== DAILY PLAN ===== */
-.plan-row{display:flex;align-items:flex-start;gap:10px;padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);position:relative}
-.plan-row:last-child{border-bottom:none}
-.plan-time{font-family:var(--font-display);font-size:11px;color:var(--accent);width:44px;flex-shrink:0;padding-top:2px}
-.plan-line{display:flex;flex-direction:column;align-items:center;gap:0;margin-top:4px}
-.plan-dot{width:8px;height:8px;border-radius:50%;flex-shrink:0;border:1.5px solid var(--accent)}
-.plan-vline{width:1px;flex:1;min-height:20px;background:var(--border);margin-top:3px}
-.plan-content{flex:1}
-.plan-title{font-size:13px;color:var(--text);font-weight:600;line-height:1.4}
-.plan-sub{font-size:10px;color:var(--muted);margin-top:2px;line-height:1.5}
-.plan-row.highlight{background:rgba(79,195,247,0.04);margin:0 -16px;padding:10px 16px;border-radius:8px}
-.plan-row.highlight .plan-time{color:var(--accent)}
-.plan-row.highlight .plan-dot{background:var(--accent);box-shadow:0 0 8px var(--glow)}
+/* ═══ DAILY PLAN ═══ */
+.prow2{display:flex;align-items:flex-start;gap:9px;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.03)}
+.prow2:last-child{border-bottom:none}
+.prow2.now{background:linear-gradient(90deg,rgba(79,195,247,0.06),transparent);margin:0 -14px;padding:9px 14px;border-radius:8px}
+.ptime{font-family:var(--fd);font-size:11px;color:var(--a1);width:42px;flex-shrink:0;padding-top:1px}
+.pvline{display:flex;flex-direction:column;align-items:center;margin-top:4px}
+.pdot{width:8px;height:8px;border-radius:50%;border:1.5px solid var(--a1);flex-shrink:0}
+.prow2.now .pdot{background:var(--a1);box-shadow:0 0 8px var(--glow)}
+.plinev{width:1px;flex:1;min-height:18px;background:var(--bdr);margin-top:3px}
+.ptxt{flex:1}
+.ptitle{font-size:13px;font-weight:600;color:var(--txt);line-height:1.4}
+.prow2.now .ptitle{color:var(--a1)}
+.psub{font-size:10px;color:var(--mut);margin-top:2px;line-height:1.5}
 
-/* ===== PROFILE ===== */
-.prof-row{display:flex;justify-content:space-between;align-items:center;padding:9px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
-.prof-row:last-child{border-bottom:none}
-.prof-key{font-size:9px;color:var(--muted);letter-spacing:2px;font-family:var(--font-display)}
-.prof-val{font-size:12px;color:var(--text);text-align:right;max-width:58%;line-height:1.4;font-weight:600}
-.prof-val.hi{background:linear-gradient(135deg,var(--accent),var(--accent2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
+/* ═══ PROFILE ═══ */
+.prof{display:flex;justify-content:space-between;align-items:center;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+.prof:last-child{border-bottom:none}
+.pk{font-size:8px;color:var(--mut);letter-spacing:2px;font-family:var(--fd)}
+.pv{font-size:12px;color:var(--txt);text-align:right;max-width:60%;line-height:1.4;font-weight:600}
+.pv.hi{background:linear-gradient(135deg,var(--a1),var(--a2));-webkit-background-clip:text;-webkit-text-fill-color:transparent;background-clip:text}
 
-/* ===== THEME PICKER ===== */
-.theme-row{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px}
-.theme-btn{border-radius:10px;padding:12px 8px;border:1.5px solid transparent;cursor:pointer;text-align:center;transition:all 0.2s;background:var(--bg3)}
-.theme-btn.active{border-color:var(--accent);box-shadow:0 0 12px var(--glow)}
-.theme-dot{width:24px;height:24px;border-radius:50%;margin:0 auto 6px;display:block}
-.theme-name{font-family:var(--font-display);font-size:9px;letter-spacing:2px;color:var(--text)}
+/* ═══ THEME PICKER ═══ */
+.tgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-top:4px}
+.tbtn{border-radius:10px;padding:12px 6px;border:1.5px solid transparent;cursor:pointer;text-align:center;transition:all 0.25s;background:var(--bg3)}
+.tbtn.sel{border-color:var(--a1);box-shadow:0 0 14px var(--glow)}
+.tdot{width:24px;height:24px;border-radius:50%;margin:0 auto 6px}
+.tname{font-family:var(--fd);font-size:8.5px;letter-spacing:2px;color:var(--txt)}
 
-/* ===== ALARM MODAL ===== */
-.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.8);z-index:500;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity 0.3s;backdrop-filter:blur(4px)}
+/* ═══ ALARM SHEET ═══ */
+.overlay{position:fixed;inset:0;background:rgba(0,0,0,0.75);z-index:800;display:flex;align-items:flex-end;opacity:0;pointer-events:none;transition:opacity 0.3s;backdrop-filter:blur(6px);-webkit-backdrop-filter:blur(6px)}
 .overlay.open{opacity:1;pointer-events:all}
-.sheet{width:100%;background:var(--bg1);border-radius:20px 20px 0 0;padding:20px 16px calc(20px + env(safe-area-inset-bottom));border-top:1px solid var(--border);transform:translateY(100%);transition:transform 0.35s cubic-bezier(0.4,0,0.2,1);max-height:85vh;overflow-y:auto}
-.sheet::before{content:'';display:block;width:36px;height:3px;background:var(--border);border-radius:2px;margin:0 auto 16px}
+.sheet{width:100%;background:var(--bg1);border-radius:22px 22px 0 0;padding:0 14px calc(18px + env(safe-area-inset-bottom,0px));border-top:1px solid var(--bdr);transform:translateY(100%);transition:transform 0.38s cubic-bezier(0.4,0,0.2,1);max-height:88vh;overflow-y:auto}
 .overlay.open .sheet{transform:translateY(0)}
-.sheet-title{font-family:var(--font-display);font-size:16px;font-weight:900;letter-spacing:3px;color:var(--accent);margin-bottom:16px}
-.alarm-row{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.05)}
-.alarm-row:last-of-type{border-bottom:none}
-.alarm-info{flex:1}
-.alarm-time{font-family:var(--font-display);font-size:26px;font-weight:900;color:var(--text);line-height:1}
-.alarm-desc{font-size:10px;color:var(--muted);margin-top:2px;letter-spacing:1px}
-.toggle-wrap{flex-shrink:0}
-.toggle{width:46px;height:26px;background:var(--bg3);border-radius:13px;position:relative;cursor:pointer;transition:background 0.25s;border:1px solid var(--border)}
-.toggle.on{background:var(--accent);border-color:var(--accent)}
-.toggle::after{content:'';position:absolute;width:20px;height:20px;background:white;border-radius:50%;top:2px;left:2px;transition:transform 0.25s;box-shadow:0 1px 4px rgba(0,0,0,0.3)}
-.toggle.on::after{transform:translateX(20px)}
-.sheet-close{width:100%;padding:13px;background:var(--bg3);border:1px solid var(--border);border-radius:10px;color:var(--muted);font-family:var(--font-display);font-size:10px;cursor:pointer;margin-top:14px;letter-spacing:2px}
+.sheet-handle{width:36px;height:3px;background:var(--bdr);border-radius:2px;margin:14px auto 16px}
+.sttl{font-family:var(--fd);font-size:15px;font-weight:900;letter-spacing:3px;color:var(--a1);margin-bottom:14px}
+.arow{display:flex;align-items:center;gap:12px;padding:12px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+.arow:last-of-type{border-bottom:none}
+.ainfo{flex:1}
+.atime{font-family:var(--fd);font-size:28px;font-weight:900;color:var(--txt);line-height:1}
+.adesc{font-size:10px;color:var(--mut);margin-top:2px;letter-spacing:1px}
+.tgl{width:46px;height:26px;background:var(--bg3);border-radius:13px;position:relative;cursor:pointer;transition:background 0.25s;border:1px solid var(--bdr);flex-shrink:0}
+.tgl.on{background:var(--a1);border-color:var(--a1)}
+.tgl::after{content:'';position:absolute;width:20px;height:20px;background:#fff;border-radius:50%;top:2px;left:2px;transition:transform 0.25s;box-shadow:0 1px 4px rgba(0,0,0,0.35)}
+.tgl.on::after{transform:translateX(20px)}
+.sclose{width:100%;padding:13px;background:var(--bg3);border:1px solid var(--bdr);border-radius:10px;color:var(--mut);font-family:var(--fd);font-size:9px;cursor:pointer;margin-top:14px;letter-spacing:2px}
 
-/* ===== MUSIC BAR ===== */
-.music-bar{background:var(--bg2);border:1px solid var(--border);border-radius:12px;padding:12px 14px;display:flex;align-items:center;gap:12px;margin-bottom:10px}
-.music-icon{font-size:20px;animation:rotate 4s linear infinite paused}
-.music-icon.playing{animation-play-state:running}
-@keyframes rotate{to{transform:rotate(360deg)}}
-.music-info{flex:1}
-.music-title{font-size:12px;color:var(--text);font-weight:600}
-.music-artist{font-size:10px;color:var(--muted);margin-top:1px}
-.music-btn{width:36px;height:36px;border-radius:50%;border:1px solid var(--accent);background:transparent;color:var(--accent);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
-.music-btn:active{background:var(--accent);color:var(--bg0)}
-.music-wave{display:flex;align-items:center;gap:2px;height:20px}
-.bar-wave{width:3px;border-radius:2px;background:var(--accent);animation:wave 0.8s ease-in-out infinite alternate}
-.bar-wave:nth-child(1){height:6px;animation-delay:0s}
-.bar-wave:nth-child(2){height:14px;animation-delay:0.1s}
-.bar-wave:nth-child(3){height:10px;animation-delay:0.2s}
-.bar-wave:nth-child(4){height:18px;animation-delay:0.15s}
-.bar-wave:nth-child(5){height:8px;animation-delay:0.05s}
-@keyframes wave{to{transform:scaleY(0.3)}}
-.music-wave.paused .bar-wave{animation-play-state:paused}
+/* ═══ MUSIC ═══ */
+.mbar{background:var(--bg2);border:1px solid var(--bdr);border-radius:12px;padding:11px 13px;display:flex;align-items:center;gap:11px;margin-bottom:9px;position:relative;overflow:hidden}
+.mbar::before{content:'';position:absolute;inset:0;background:radial-gradient(ellipse at 80% 50%,var(--glow2),transparent 60%);pointer-events:none;opacity:0;transition:opacity 0.5s}
+.mbar.playing::before{opacity:1}
+.mdisc{font-size:22px;transition:transform 0.3s}
+.mbar.playing .mdisc{animation:spin2 3s linear infinite}
+@keyframes spin2{to{transform:rotate(360deg)}}
+.minfo{flex:1}
+.mtitle{font-size:12px;font-weight:600;color:var(--txt)}
+.martist{font-size:9px;color:var(--mut);margin-top:1px}
+.mwave{display:flex;align-items:center;gap:2px;height:18px}
+.mw{width:3px;border-radius:2px;background:var(--a1);animation:mwave 0.7s ease-in-out infinite alternate;transform-origin:bottom}
+.mw:nth-child(1){height:5px;animation-delay:0s}
+.mw:nth-child(2){height:13px;animation-delay:0.12s}
+.mw:nth-child(3){height:9px;animation-delay:0.22s}
+.mw:nth-child(4){height:16px;animation-delay:0.08s}
+.mw:nth-child(5){height:6px;animation-delay:0.18s}
+@keyframes mwave{to{transform:scaleY(0.2)}}
+.mwave.paused .mw{animation-play-state:paused;opacity:0.4}
+.mbtn{width:36px;height:36px;border-radius:50%;border:1px solid var(--a1);background:transparent;color:var(--a1);font-size:14px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;flex-shrink:0}
+.mbtn:active{background:var(--a1);color:var(--bg0)}
 
-/* ===== TODAY CARD ===== */
-.today-card{background:linear-gradient(135deg,var(--bg2),var(--bg3));border:1px solid var(--accent);border-radius:14px;padding:14px 16px;margin-bottom:10px;position:relative;overflow:hidden}
-.today-card::before{content:'';position:absolute;inset:0;background:linear-gradient(135deg,var(--glow),transparent);opacity:0.1}
-.today-top{font-family:var(--font-display);font-size:8px;letter-spacing:3px;color:var(--accent);margin-bottom:8px}
-.today-main{font-size:14px;color:var(--text);line-height:1.6;font-weight:600}
-.today-next{font-size:10px;color:var(--muted);margin-top:8px}
+/* ═══ NOTIF STATUS ═══ */
+.notif-ok{color:var(--ok)}
+.notif-no{color:var(--bad)}
 
-/* ===== ANIMATIONS ===== */
-@keyframes ring{0%,100%{transform:rotate(0)}15%{transform:rotate(-20deg)}30%{transform:rotate(20deg)}45%{transform:rotate(-15deg)}60%{transform:rotate(15deg)}75%{transform:rotate(-5deg)}}
-.ringing{animation:ring 0.7s ease-in-out}
-@keyframes fadeIn{from{opacity:0;transform:translateY(8px)}to{opacity:1;transform:translateY(0)}}
-.fade-in{animation:fadeIn 0.3s ease-out}
-
-/* ===== ENERGY BARS ===== */
-.energy-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
-.energy-label{font-size:9px;color:var(--muted);width:38px;font-family:var(--font-display);letter-spacing:1px}
-.energy-bar{flex:1;height:4px;background:var(--bg3);border-radius:2px;overflow:hidden}
-.energy-fill{height:100%;border-radius:2px;position:relative}
-
-/* ===== SCROLLBAR ===== */
-::-webkit-scrollbar{width:3px}
-::-webkit-scrollbar-track{background:transparent}
-::-webkit-scrollbar-thumb{background:var(--border);border-radius:2px}
+/* ═══ ANIM ═══ */
+@keyframes fadeUp{from{opacity:0;transform:translateY(10px)}to{opacity:1;transform:translateY(0)}}
+.fu{animation:fadeUp 0.3s ease-out}
 </style>
 </head>
 <body data-theme="cosmos">
 
-<div id="particles"></div>
+<canvas id="bgc"></canvas>
 
 <div id="splash">
-  <div class="splash-ring"></div>
-  <div class="splash-title">ELYSIUM</div>
-  <div class="splash-sub">PERSONAL AI · YAKUP EKİNCİ</div>
-  <div class="splash-bar"><div class="splash-bar-fill"></div></div>
+  <div class="sp-outer"><div class="sp-e">E</div></div>
+  <div class="sp-name">ELYSIUM</div>
+  <div class="sp-sub">PERSONAL AI · YAKUP EKİNCİ</div>
+  <div class="sp-prog"><div class="sp-fill"></div></div>
 </div>
 
 <div id="app">
-  <div class="header">
-    <div class="header-logo">ELYSIUM</div>
-    <div class="header-time" id="live-time">--:--:--</div>
-    <div class="header-btns">
-      <button class="hbtn" id="music-hbtn" onclick="toggleMusic()" title="Müzik">🎵</button>
-      <button class="hbtn" id="alarm-hbtn" onclick="openSheet('alarm-sheet')">🔔</button>
+  <div class="hdr">
+    <div class="hdr-logo">ELYSIUM</div>
+    <div class="hdr-clock" id="clock">--:--:--</div>
+    <div class="hdr-btns">
+      <div class="hbtn" id="mbtn" onclick="toggleMusic()" title="Müzik">🎵</div>
+      <div class="hbtn" id="abtn" onclick="openSheet()">🔔</div>
     </div>
   </div>
 
   <div class="tabs">
-    <button class="tab active" onclick="showTab('home',this)">ANA</button>
-    <button class="tab" onclick="showTab('plan',this)">GÜNLÜK</button>
-    <button class="tab" onclick="showTab('tasks',this)">GÖREV</button>
-    <button class="tab" onclick="showTab('profile',this)">PROFİL</button>
-    <button class="tab" onclick="showTab('settings',this)">AYAR</button>
+    <div class="tb on" onclick="gotoTab('home',this)">ANA</div>
+    <div class="tb" onclick="gotoTab('plan',this)">GÜNLÜK</div>
+    <div class="tb" onclick="gotoTab('tasks',this)">GÖREV</div>
+    <div class="tb" onclick="gotoTab('profile',this)">PROFİL</div>
+    <div class="tb" onclick="gotoTab('settings',this)">AYAR</div>
   </div>
 
-  <div class="content" id="content">
+  <div class="cnt" id="cnt">
 
-    <div id="tab-home" class="fade-in">
-      <div class="music-bar" id="music-bar">
-        <div class="music-icon" id="music-icon">💿</div>
-        <div class="music-info">
-          <div class="music-title">Stay — Hans Zimmer</div>
-          <div class="music-artist">Interstellar OST</div>
+    <!-- HOME -->
+    <div id="tab-home">
+      <div class="mbar" id="mbar">
+        <div class="mdisc" id="mdisc">💿</div>
+        <div class="minfo">
+          <div class="mtitle">Interstellar Theme</div>
+          <div class="martist">Hans Zimmer · Piano</div>
         </div>
-        <div class="music-wave paused" id="music-wave">
-          <div class="bar-wave"></div><div class="bar-wave"></div><div class="bar-wave"></div>
-          <div class="bar-wave"></div><div class="bar-wave"></div>
+        <div class="mwave paused" id="mwave">
+          <div class="mw"></div><div class="mw"></div><div class="mw"></div>
+          <div class="mw"></div><div class="mw"></div>
         </div>
-        <button class="music-btn" onclick="toggleMusic()">▶</button>
+        <div class="mbtn" id="mplaybtn" onclick="toggleMusic()">▶</div>
       </div>
 
       <div class="card">
-        <div class="card-label">ALES'E KALAN SÜRE · 10 MAYIS 2026</div>
-        <div class="cd-grid" id="cd-ales"></div>
-        <div class="prog-wrap">
-          <div class="prog-row"><span>Hazırlık</span><span id="prog-pct">0%</span></div>
-          <div class="prog-bar"><div class="prog-fill" id="prog-fill" style="width:0%"></div></div>
+        <div class="clbl">ALES · 10 MAYIS 2026</div>
+        <div class="cdg" id="cd1"></div>
+        <div class="pwrap">
+          <div class="prow"><span>Hazırlık</span><span id="ppct">0%</span></div>
+          <div class="pbar"><div class="pfill" id="pfill" style="width:0%"></div></div>
         </div>
       </div>
 
       <div class="card">
-        <div class="card-label">ASKERLİK TECİLİ · 31 TEMMUZ 2026</div>
-        <div class="cd-grid" id="cd-tecil"></div>
+        <div class="clbl">ASKERLİK TECİLİ · 31 TEMMUZ 2026</div>
+        <div class="cdg" id="cd2"></div>
       </div>
 
-      <div class="stats-row" id="stats-row">
-        <div class="stat-box"><div class="stat-num" id="st-total">12</div><div class="stat-lbl">TOPLAM</div></div>
-        <div class="stat-box"><div class="stat-num" id="st-done" style="color:var(--ok)">0</div><div class="stat-lbl">BİTTİ</div></div>
-        <div class="stat-box"><div class="stat-num" style="color:var(--danger)">3</div><div class="stat-lbl">ACİL</div></div>
+      <div class="sgrid">
+        <div class="sb"><div class="sn" id="sttotal">12</div><div class="sl">TOPLAM</div></div>
+        <div class="sb"><div class="sn" id="stdone" style="-webkit-text-fill-color:var(--ok);color:var(--ok)">0</div><div class="sl">BİTTİ</div></div>
+        <div class="sb"><div class="sn" style="-webkit-text-fill-color:var(--bad);color:var(--bad)">3</div><div class="sl">ACİL</div></div>
       </div>
 
-      <div class="today-card">
-        <div class="today-top">🔥 BUGÜNÜN ODAĞI</div>
-        <div class="today-main">Red Fish iOS review takip et.<br>1 gameplay videosu çek + yükle.</div>
-        <div class="today-next">Yarın → LinkedIn ilk gönderi &nbsp;·&nbsp; Öbür gün → Reddit</div>
+      <div class="today" id="todayCard">
+        <div class="today-day" id="todayDay"></div>
+        <div class="today-badge">🔥 BUGÜNÜN ODAĞI</div>
+        <div class="today-main" id="todayMain">Yükleniyor...</div>
+        <div class="today-next" id="todayNext"></div>
       </div>
 
       <div class="card">
-        <div class="card-label">ENERJİ HARİTASI</div>
-        <div class="energy-row">
-          <div class="energy-label">09-12</div>
-          <div class="energy-bar"><div class="energy-fill" style="width:35%;background:var(--muted)"></div></div>
-          <div style="font-size:9px;color:var(--muted);width:20px;text-align:right">35%</div>
-        </div>
-        <div class="energy-row">
-          <div class="energy-label">12-13</div>
-          <div class="energy-bar"><div class="energy-fill" style="width:60%;background:#ffa000"></div></div>
-          <div style="font-size:9px;color:#ffa000;width:20px;text-align:right">60%</div>
-        </div>
-        <div class="energy-row">
-          <div class="energy-label" style="color:var(--accent)">13-17</div>
-          <div class="energy-bar"><div class="energy-fill" style="width:95%;background:linear-gradient(90deg,var(--accent),var(--accent2))"></div></div>
-          <div style="font-size:9px;color:var(--accent);width:20px;text-align:right">95%</div>
-        </div>
-        <div class="energy-row" style="margin-bottom:0">
-          <div class="energy-label">17-23</div>
-          <div class="energy-bar"><div class="energy-fill" style="width:55%;background:var(--ok)"></div></div>
-          <div style="font-size:9px;color:var(--ok);width:20px;text-align:right">55%</div>
-        </div>
+        <div class="clbl">ENERJİ HARİTASI</div>
+        <div class="erow"><div class="elbl">09-12</div><div class="ebar"><div class="efill" style="width:35%;background:var(--mut)"></div></div><div class="epct" style="color:var(--mut)">35%</div></div>
+        <div class="erow"><div class="elbl">12-13</div><div class="ebar"><div class="efill" style="width:60%;background:var(--warn)"></div></div><div class="epct" style="color:var(--warn)">60%</div></div>
+        <div class="erow"><div class="elbl" style="color:var(--a1)">13-17</div><div class="ebar"><div class="efill" style="width:95%;background:linear-gradient(90deg,var(--a1),var(--a2))"></div></div><div class="epct" style="color:var(--a1)">95%</div></div>
+        <div class="erow" style="margin-bottom:0"><div class="elbl">17-23</div><div class="ebar"><div class="efill" style="width:55%;background:var(--ok)"></div></div><div class="epct" style="color:var(--ok)">55%</div></div>
       </div>
     </div>
 
+    <!-- DAILY PLAN -->
     <div id="tab-plan" style="display:none">
       <div class="card">
-        <div class="card-label">GÜNLÜK PLAN</div>
-        <div id="plan-list"></div>
+        <div class="clbl" id="planDate">GÜNLÜK PLAN</div>
+        <div id="planList"></div>
       </div>
     </div>
 
+    <!-- TASKS -->
     <div id="tab-tasks" style="display:none">
       <div class="sh">🔥 Acil — Bu Hafta</div>
-      <div class="card" id="tasks-fire"></div>
+      <div class="card" id="tf"></div>
       <div class="sh">⚡ Bu Ay</div>
-      <div class="card" id="tasks-month"></div>
+      <div class="card" id="tm"></div>
       <div class="sh">📅 1-3 Ay</div>
-      <div class="card" id="tasks-later"></div>
+      <div class="card" id="tl"></div>
       <div class="sh">💤 Donduruldu</div>
-      <div class="card" id="tasks-frozen"></div>
+      <div class="card" id="tz"></div>
     </div>
 
+    <!-- PROFILE -->
     <div id="tab-profile" style="display:none">
-      <div class="card">
-        <div class="card-label">KİMLİK</div>
-        <div class="prof-row"><div class="prof-key">AD</div><div class="prof-val hi">Yakup Ekinci</div></div>
-        <div class="prof-row"><div class="prof-key">KONUM</div><div class="prof-val">Dikili, İzmir</div></div>
-        <div class="prof-row"><div class="prof-key">MESLEK</div><div class="prof-val">Unity Game Developer</div></div>
-        <div class="prof-row"><div class="prof-key">STÜDYO</div><div class="prof-val">Arxes Studios</div></div>
-        <div class="prof-row"><div class="prof-key">DOĞUM</div><div class="prof-val">10.02.2000 · 26 yaş</div></div>
+      <div class="card"><div class="clbl">KİMLİK</div>
+        <div class="prof"><div class="pk">AD</div><div class="pv hi">Yakup Ekinci</div></div>
+        <div class="prof"><div class="pk">KONUM</div><div class="pv">Dikili, İzmir</div></div>
+        <div class="prof"><div class="pk">MESLEK</div><div class="pv">Unity Game Developer</div></div>
+        <div class="prof"><div class="pk">STÜDYO</div><div class="pv">Arxes Studios</div></div>
+        <div class="prof"><div class="pk">DOĞUM</div><div class="pv">10.02.2000 · 26 yaş</div></div>
       </div>
-      <div class="card">
-        <div class="card-label">KRİTİK TARİHLER</div>
-        <div class="prof-row"><div class="prof-key">ALES/1 SINAV</div><div class="prof-val hi">10 Mayıs 2026</div></div>
-        <div class="prof-row"><div class="prof-key">ALES SONUÇ</div><div class="prof-val">5 Haziran 2026</div></div>
-        <div class="prof-row"><div class="prof-key">YL BAŞVURU</div><div class="prof-val">Haziran sonu</div></div>
-        <div class="prof-row"><div class="prof-key">TECİL BİTİŞ</div><div class="prof-val hi">31 Temmuz 2026</div></div>
-        <div class="prof-row"><div class="prof-key">ALES HEDEFİ</div><div class="prof-val">SAY 70+ (İYTE / Ege)</div></div>
+      <div class="card"><div class="clbl">KRİTİK TARİHLER</div>
+        <div class="prof"><div class="pk">ALES/1</div><div class="pv hi">10 Mayıs 2026</div></div>
+        <div class="prof"><div class="pk">ALES SONUÇ</div><div class="pv">5 Haziran 2026</div></div>
+        <div class="prof"><div class="pk">YL BAŞVURU</div><div class="pv">Haziran sonu</div></div>
+        <div class="prof"><div class="pk">TECİL BİTİŞ</div><div class="pv hi">31 Temmuz 2026</div></div>
+        <div class="prof"><div class="pk">HEDEF</div><div class="pv">SAY 70+ · İYTE / Ege</div></div>
       </div>
-      <div class="card">
-        <div class="card-label">OYUN PORTFÖYÜ</div>
-        <div class="prof-row"><div class="prof-key">RED FISH</div><div class="prof-val hi">iOS Review + Android Live</div></div>
-        <div class="prof-row"><div class="prof-key">SATRANÇ / TAVLA</div><div class="prof-val">Geliştirmede</div></div>
-        <div class="prof-row"><div class="prof-key">ROBLOX</div><div class="prof-val" style="color:var(--muted)">Donduruldu</div></div>
-        <div class="prof-row"><div class="prof-key">STEAM</div><div class="prof-val" style="color:var(--muted)">Donduruldu</div></div>
+      <div class="card"><div class="clbl">PORTFÖY</div>
+        <div class="prof"><div class="pk">RED FISH</div><div class="pv hi">iOS Review + Android Live</div></div>
+        <div class="prof"><div class="pk">SATRANÇ/TAVLA</div><div class="pv">Geliştirmede</div></div>
+        <div class="prof"><div class="pk">ROBLOX</div><div class="pv" style="-webkit-text-fill-color:var(--mut);color:var(--mut)">Donduruldu</div></div>
+        <div class="prof"><div class="pk">STEAM</div><div class="pv" style="-webkit-text-fill-color:var(--mut);color:var(--mut)">Donduruldu</div></div>
       </div>
-      <div class="card">
-        <div class="card-label">HEDEFLER</div>
-        <div class="prof-row"><div class="prof-key">KISA</div><div class="prof-val">iOS çıkış, sosyal medya</div></div>
-        <div class="prof-row"><div class="prof-key">ORTA</div><div class="prof-val">Yurt dışı iş — Almanya</div></div>
-        <div class="prof-row"><div class="prof-key">UZUN</div><div class="prof-val">Bağımsız gelir</div></div>
-        <div class="prof-row"><div class="prof-key">İNGİLİZCE</div><div class="prof-val">B2 → C1</div></div>
+      <div class="card"><div class="clbl">HEDEFLER</div>
+        <div class="prof"><div class="pk">KISA</div><div class="pv">iOS çıkış · sosyal büyüme</div></div>
+        <div class="prof"><div class="pk">ORTA</div><div class="pv">Almanya · yurt dışı iş</div></div>
+        <div class="prof"><div class="pk">UZUN</div><div class="pv">Bağımsız gelir · scale</div></div>
+        <div class="prof"><div class="pk">İNGİLİZCE</div><div class="pv">B2 → C1</div></div>
       </div>
     </div>
 
+    <!-- SETTINGS -->
     <div id="tab-settings" style="display:none">
-      <div class="card">
-        <div class="card-label">TEMA</div>
-        <div class="theme-row">
-          <div class="theme-btn active" id="th-cosmos" onclick="setTheme('cosmos')">
-            <div class="theme-dot" style="background:linear-gradient(135deg,#4fc3f7,#7c4dff)"></div>
-            <div class="theme-name">COSMOS</div>
-          </div>
-          <div class="theme-btn" id="th-ember" onclick="setTheme('ember')">
-            <div class="theme-dot" style="background:linear-gradient(135deg,#ff6d00,#ffea00)"></div>
-            <div class="theme-name">EMBER</div>
-          </div>
-          <div class="theme-btn" id="th-void" onclick="setTheme('void')">
-            <div class="theme-dot" style="background:linear-gradient(135deg,#e0e0e0,#424242)"></div>
-            <div class="theme-name">VOID</div>
-          </div>
+      <div class="card"><div class="clbl">TEMA</div>
+        <div class="tgrid">
+          <div class="tbtn sel" id="th-cosmos" onclick="setTheme('cosmos')">
+            <div class="tdot" style="background:linear-gradient(135deg,#4fc3f7,#7c4dff)"></div>
+            <div class="tname">COSMOS</div></div>
+          <div class="tbtn" id="th-ember" onclick="setTheme('ember')">
+            <div class="tdot" style="background:linear-gradient(135deg,#ff6d00,#ffb300)"></div>
+            <div class="tname">EMBER</div></div>
+          <div class="tbtn" id="th-void" onclick="setTheme('void')">
+            <div class="tdot" style="background:linear-gradient(135deg,#e0e0e0,#444)"></div>
+            <div class="tname">VOID</div></div>
         </div>
       </div>
-      <div class="card">
-        <div class="card-label">BİLDİRİMLER</div>
-        <div class="prof-row">
-          <div class="prof-key">İZİN DURUMU</div>
-          <div class="prof-val" id="notif-status">—</div>
-        </div>
-        <button onclick="requestNotif()" style="width:100%;padding:11px;background:var(--bg3);border:1px solid var(--border);border-radius:8px;color:var(--accent);font-family:var(--font-display);font-size:10px;letter-spacing:2px;cursor:pointer;margin-top:8px">BİLDİRİM İZNİ AL</button>
+      <div class="card"><div class="clbl">BİLDİRİMLER</div>
+        <div class="prof"><div class="pk">DURUM</div><div class="pv" id="nstat">—</div></div>
+        <div class="prof"><div class="pk">FCM TOKEN</div><div class="pv" id="fcmstat" style="font-size:9px">—</div></div>
+        <button onclick="reqNotif()" style="width:100%;padding:11px;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px;color:var(--a1);font-family:var(--fd);font-size:9px;letter-spacing:2px;cursor:pointer;margin-top:8px">BİLDİRİM İZNİ AL + KAYIT</button>
+        <button onclick="testNotif()" style="width:100%;padding:11px;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px;color:var(--a2);font-family:var(--fd);font-size:9px;letter-spacing:2px;cursor:pointer;margin-top:6px">TEST BİLDİRİMİ GÖNDER</button>
       </div>
-      <div class="card">
-        <div class="card-label">GÖREVLERİ SIFIRLA</div>
-        <button onclick="resetTasks()" style="width:100%;padding:11px;background:rgba(255,68,68,0.08);border:1px solid rgba(255,68,68,0.2);border-radius:8px;color:var(--danger);font-family:var(--font-display);font-size:10px;letter-spacing:2px;cursor:pointer">TÜM GÖREVLERİ SIFIRLA</button>
+      <div class="card"><div class="clbl">GÖREVLERİ SIFIRLA</div>
+        <button onclick="resetAll()" style="width:100%;padding:11px;background:rgba(255,68,68,0.07);border:1px solid rgba(255,68,68,0.2);border-radius:8px;color:var(--bad);font-family:var(--fd);font-size:9px;letter-spacing:2px;cursor:pointer">TÜM İLERLEMEYİ SİL</button>
       </div>
-      <div class="card">
-        <div class="card-label">HAKKINDA</div>
-        <div class="prof-row"><div class="prof-key">VERSİYON</div><div class="prof-val">2.0.0</div></div>
-        <div class="prof-row"><div class="prof-key">YAPAN</div><div class="prof-val hi">Elysium Bot</div></div>
+      <div class="card"><div class="clbl">HAKKINDA</div>
+        <div class="prof"><div class="pk">SÜRÜM</div><div class="pv">3.0.0 · 2026</div></div>
+        <div class="prof"><div class="pk">YAPAN</div><div class="pv hi">Elysium Bot</div></div>
       </div>
     </div>
 
   </div>
 </div>
 
-<div class="overlay" id="alarm-sheet" onclick="closeSheetOutside(event,'alarm-sheet')">
+<!-- ALARM SHEET -->
+<div class="overlay" id="alarmSheet" onclick="closeIfBg(event)">
   <div class="sheet">
-    <div class="sheet-title">⏰ ALARMLAR</div>
-    <div id="alarm-list-dom"></div>
-    <button class="sheet-close" onclick="closeSheet('alarm-sheet')">KAPAT</button>
+    <div class="sheet-handle"></div>
+    <div class="sttl">⏰ ALARMLAR</div>
+    <div id="alarmDom"></div>
+    <button class="sclose" onclick="closeSheet()">KAPAT</button>
   </div>
 </div>
-
-<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.0.0/firebase-messaging-compat.js"></script>
 
 <script>
-// EMNİYET KEMERİ: JS hatası olsa bile Splash ekranı kapanır
-setTimeout(() => {
-  const splash = document.getElementById('splash');
-  if(splash && splash.style.display !== 'none') {
-    splash.style.opacity = '0';
-    setTimeout(() => { splash.style.display = 'none'; document.getElementById('app').classList.add('visible'); }, 800);
+// ══════════════════════════════════════
+// FIREBASE — optional, graceful fallback
+// ══════════════════════════════════════
+let messaging = null;
+(async () => {
+  try {
+    const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
+    const { getMessaging, getToken, onMessage } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js');
+    const cfg = {
+      apiKey:"AIzaSyCU08n2MbhgejPb8exKyvcPKn-xLkBu0sY",
+      authDomain:"botelysium-ddf50.firebaseapp.com",
+      projectId:"botelysium-ddf50",
+      storageBucket:"botelysium-ddf50.firebasestorage.app",
+      messagingSenderId:"763753788539",
+      appId:"1:763753788539:web:62715bac995c0dc5b45ede"
+    };
+    const app = initializeApp(cfg);
+    messaging = getMessaging(app);
+    onMessage(messaging, p => fireAlarm({ desc: p.notification?.body || 'Hatırlatıcı' }));
+    window._fbMessaging = { getToken, messaging };
+    document.getElementById('fcmstat').textContent = 'Hazır';
+  } catch(e) {
+    document.getElementById('fcmstat').textContent = 'Devre dışı';
   }
-}, 4000);
+})();
 
-// FIREBASE KONFİGÜRASYONU VE BAŞLATMA
-const firebaseConfig = {
-  apiKey: "AIzaSyCU08n2MbhgejPb8exKyvcPKn-xLkBu0sY",
-  authDomain: "botelysium-ddf50.firebaseapp.com",
-  projectId: "botelysium-ddf50",
-  storageBucket: "botelysium-ddf50.firebasestorage.app",
-  messagingSenderId: "763753788539",
-  appId: "1:763753788539:web:62715bac995c0dc5b45ede",
-  measurementId: "G-7GMTH40N5E"
+// ══════════════════════════════════════
+// STORAGE
+// ══════════════════════════════════════
+const S = {
+  get: (k, d) => { try { const v = localStorage.getItem('ely_'+k); return v ? JSON.parse(v) : d; } catch(e) { return d; } },
+  set: (k, v) => { try { localStorage.setItem('ely_'+k, JSON.stringify(v)); } catch(e) {} }
 };
 
-let messaging;
-try {
-  firebase.initializeApp(firebaseConfig);
-  messaging = firebase.messaging();
-} catch(e) {
-  console.error("Firebase başlatılamadı:", e);
-}
-
-// VERİLER
-const ALARMS_DATA = [
-  {id:0,time:'09:00',desc:'SABAH BAŞLANGIÇ',on:true},
-  {id:1,time:'13:00',desc:'ANA ÇALIŞMA BLOĞU',on:true},
-  {id:2,time:'18:00',desc:'YÜRÜYÜŞ / HAREKET',on:true},
-  {id:3,time:'19:00',desc:'ALES ÇALIŞMA',on:true},
-  {id:4,time:'23:00',desc:'EKRANI KAPAT',on:false},
+// ══════════════════════════════════════
+// DATA
+// ══════════════════════════════════════
+const ALARMS = [
+  {id:0, time:'09:00', desc:'SABAH BAŞLANGIÇ'},
+  {id:1, time:'13:00', desc:'ANA ÇALIŞMA BLOĞU 🔥'},
+  {id:2, time:'18:00', desc:'YÜRÜYÜŞ / HAREKET'},
+  {id:3, time:'19:00', desc:'ALES ÇALIŞMA ⚡'},
+  {id:4, time:'23:00', desc:'EKRANI KAPAT'},
 ];
 
-const PLAN_DATA = [
-  {time:'08:30',title:'Uyan, yüzünü yıka, su iç',sub:'Telefona bakma — 10 dk hareket et',color:'#66bb6a',highlight:false},
-  {time:'09:00',title:'Kahvaltı + günün tek önceliğini belirle',sub:'1 şey seç — bugün ne bitti sayılır?',color:'#ffa000',highlight:false},
-  {time:'09:30',title:'Hafif iş / mail / araştırma',sub:'Isınma modu — derin iş değil',color:'#78909c',highlight:false},
-  {time:'13:00',title:'🔥 ANA ÇALIŞMA BLOĞU',sub:'Derin iş, geliştirme, içerik üretimi — asıl sprint burası',color:'',highlight:true},
-  {time:'17:00',title:'Sosyal medya (20 dk)',sub:'Paylaşım yap, sürüklenme',color:'#ffa000',highlight:false},
-  {time:'18:00',title:'Yürüyüş / hareket',sub:'30 dk dışarı çık — pazarlık yok',color:'#66bb6a',highlight:false},
-  {time:'19:00',title:'ALES çalışma (60-90 dk)',sub:'SAY konuları + soru çöz. Haftada 5 gün.',color:'#4fc3f7',highlight:false},
-  {time:'20:00',title:'Yemek + dinlenme',sub:'Arkadaşlar, oyun — ama 23:00 cap koy',color:'#66bb6a',highlight:false},
-  {time:'23:00',title:'Ekranı kapat, günü kapat',sub:'Yarın 3 madde yaz, yat',color:'#78909c',highlight:false},
+const PLAN = [
+  {t:'08:30', title:'Uyan, yüzünü yıka, su iç', sub:'Telefona bakma — 10 dk hareket et', c:'#66bb6a'},
+  {t:'09:00', title:'Kahvaltı + günün tek önceliği', sub:'1 şey seç — bugün ne bitti sayılır?', c:'#ffa000'},
+  {t:'09:30', title:'Hafif iş / mail / araştırma', sub:'Isınma modu — derin iş değil', c:'#78909c'},
+  {t:'13:00', title:'🔥 ANA ÇALIŞMA BLOĞU', sub:'Derin iş, geliştirme, içerik — asıl sprint burası', c:'', hi:true},
+  {t:'17:00', title:'Sosyal medya (20 dk max)', sub:'Paylaşım yap, sürüklenme', c:'#ffa000'},
+  {t:'18:00', title:'Yürüyüş / hareket', sub:'30 dk dışarı çık — pazarlık yok', c:'#66bb6a'},
+  {t:'19:00', title:'ALES çalışma (60-90 dk)', sub:'SAY konuları + soru çöz. Haftada 5 gün.', c:'#4fc3f7'},
+  {t:'20:00', title:'Yemek + dinlenme', sub:'Arkadaşlar, oyun — ama 23:00 cap koy', c:'#66bb6a'},
+  {t:'23:00', title:'Ekranı kapat, günü kapat', sub:'Yarın 3 madde yaz, yat', c:'#78909c'},
 ];
 
-const TASKS_DATA = {
+const TASKS = {
   fire:[
-    {id:'t1',title:'Red Fish iOS App Store onayı',sub:'Waiting for Review. Reddi varsa anında müdahale et.'},
-    {id:'t2',title:'Sosyal medya içerik makinesi kur',sub:'3 Shorts/Reel hazırla. iOS çıkış videosu.'},
-    {id:'t3',title:'LinkedIn + Reddit aktif et',sub:'İlk gönderi + r/indiegaming paylaşımı'},
+    {id:'t1', title:'Red Fish iOS App Store onayı', sub:'Waiting for Review. Reddi varsa anında müdahale et.'},
+    {id:'t2', title:'Sosyal medya içerik makinesi kur', sub:'3 Shorts/Reel hazırla. iOS çıkış videosu.'},
+    {id:'t3', title:'LinkedIn + Reddit aktif et', sub:'İlk gönderi + r/indiegaming paylaşımı'},
   ],
   month:[
-    {id:'t4',title:'Satranç / Tavla web + store\'a al',sub:'Siteye göm, Playstore + Appstore\'a yükle'},
-    {id:'t5',title:'Red Fish oyun içi IAP ekle',sub:'Basit coin pack — geliri 2-3x artırır'},
-    {id:'t6',title:'Arxes Studios sitesi güzelleştir',sub:'Demo oyunlar gömülsün, blog profesyonelleşsin'},
-    {id:'t7',title:'ALES çalışma — günde 1.5 saat',sub:'10 Mayıs sınav. Hedef: SAY 70+'},
+    {id:'t4', title:"Satranç / Tavla web + store'a al", sub:'Siteye göm, Playstore + Appstore\'a yükle'},
+    {id:'t5', title:'Red Fish oyun içi IAP ekle', sub:'Basit coin pack — geliri 2-3x artırır'},
+    {id:'t6', title:'Arxes Studios sitesi güzelleştir', sub:'Demo oyunlar gömülsün, blog profesyonelleşsin'},
+    {id:'t7', title:'ALES çalışma — günde 1.5 saat', sub:'10 Mayıs sınav. Hedef: SAY 70+'},
   ],
   later:[
-    {id:'t8',title:'YouTube kanalı büyüt',sub:'Haftada 2 Shorts minimum. Indie dev nişi.'},
-    {id:'t9',title:'İngilizce B2 → C1',sub:'Almanya hedefi için kritik. İçeriği İngilizce yap.'},
-    {id:'t10',title:'Roblox projesini değerlendir',sub:'Bitir ya da dondur. Arada bırakma.'},
+    {id:'t8', title:'YouTube kanalı büyüt', sub:'Haftada 2 Shorts minimum. Indie dev nişi.'},
+    {id:'t9', title:'İngilizce B2 → C1', sub:'Almanya hedefi için kritik. İçeriği İngilizce yap.'},
+    {id:'t10', title:'Roblox projesini değerlendir', sub:'Bitir ya da dondur. Arada bırakma.'},
   ],
   frozen:[
-    {id:'t11',title:'Steam oyunu (kanca mekaniği)',sub:'Heves kaçtı. IAP oturduğunda bak.'},
-    {id:'t12',title:'Metaverse / otel simülasyon',sub:'Uzun vadeli vizyon. Şimdi çok erken.'},
+    {id:'t11', title:'Steam oyunu (kanca mekaniği)', sub:'Heves kaçtı. IAP oturduğunda bak.'},
+    {id:'t12', title:'Metaverse / otel simülasyon', sub:'Uzun vadeli vizyon. Şimdi çok erken.'},
   ]
 };
 
-// STORAGE İŞLEMLERİ
-function saveData(key, val) { try { localStorage.setItem('elysium_'+key, JSON.stringify(val)); } catch(e){} }
-function loadData(key, def) { try { const v = localStorage.getItem('elysium_'+key); return v ? JSON.parse(v) : def; } catch(e){ return def; } }
+// Dynamic daily focus — rotates based on day of week + week number
+const DAILY_FOCUS = [
+  { // Pzt
+    focus: 'Red Fish iOS review takip et.\n1 gameplay videosu çek ve YouTube\'a yükle.',
+    next: 'Yarın → LinkedIn ilk gönderi · Reel hazırlığı başlat'
+  },
+  { // Sal
+    focus: 'LinkedIn ilk dev gönderisi yayınla.\nInstagram Reel: Red Fish gameplay.',
+    next: 'Yarın → Reddit r/indiegaming paylaşımı'
+  },
+  { // Çar
+    focus: 'Satranç/Tavla test ortamına al.\nSiteden 1 oyunun demo versiyonunu göm.',
+    next: 'Yarın → IAP araştırması başlat'
+  },
+  { // Per
+    focus: 'Red Fish IAP coin pack araştırması.\nBir tane küçük içerik üret — 60 saniye video.',
+    next: 'Yarın → ALES yoğun çalışma günü'
+  },
+  { // Cum
+    focus: 'ALES sprint: 2 saat sayısal çalış.\nEn az 30 soru çöz — hata analizi yap.',
+    next: 'Cmt → Site güncelle · Paz → Dinlen + plan'
+  },
+  { // Cmt
+    focus: 'Arxes sitesini güncelle.\nBlog yazısı veya devlog paylaş.',
+    next: 'Yarın → Tam dinlenme günü — hafta değerlendirmesi'
+  },
+  { // Paz
+    focus: 'Dinlenme + hafta değerlendirmesi.\nYeni haftanın 3 önceliğini belirle.',
+    next: 'Pazartesi → Yeni sprint başlıyor 🚀'
+  }
+];
 
-let doneTasks = loadData('done', {});
-let alarmState = loadData('alarms', null);
-let currentTheme = loadData('theme', 'cosmos');
+// ══════════════════════════════════════
+// INIT
+// ══════════════════════════════════════
+let doneTasks = S.get('done', {});
+let alarmStates = S.get('alarms', null);
+let theme = S.get('theme', 'cosmos');
+let alarmTimers = [];
 
-if (alarmState) {
-  alarmState.forEach((on, i) => { if (ALARMS_DATA[i]) ALARMS_DATA[i].on = on; });
-}
+if (alarmStates) ALARMS.forEach((a,i) => { a.on = alarmStates[i] !== undefined ? alarmStates[i] : a.on; });
+else ALARMS.forEach(a => a.on = true);
 
-// BİLDİRİM & TOKEN FONKSİYONU
-function requestNotif() {
-  if (!('Notification' in window)) return alert('Bildirimler bu tarayıcıda desteklenmiyor.');
-  Notification.requestPermission().then((permission) => {
-    if (permission === 'granted' && messaging) {
-      messaging.getToken({ 
-        vapidKey: 'BIO3dLGuJCEipJ1v0zHnxoO0iuewsV9ekC_Rsc1bockfBb35l66a9wa6GwWp_kWQoAYscIE5W6dYhSU9KJp7ikg' 
-      })
-      .then((currentToken) => {
-        if (currentToken) {
-          console.log('TEST İÇİN BU TOKENI KOPYALA:', currentToken);
-          alert('İzin verildi! Token konsola yazdırıldı. (Uygulamayı kapatıp test atabilirsin)');
-          updateNotifStatus();
-        }
-      });
-    }
-    updateNotifStatus();
-  });
-}
+// Safety net — remove splash if JS errors out
+const safetyTimer = setTimeout(() => {
+  const s = document.getElementById('splash');
+  if (s && !s.classList.contains('gone')) {
+    s.classList.add('gone');
+    setTimeout(() => { s.style.display='none'; document.getElementById('app').classList.add('on'); }, 900);
+  }
+}, 5000);
 
-function updateNotifStatus() {
-  const el = document.getElementById('notif-status');
-  if (!el) return;
-  if (!('Notification' in window)) { el.textContent = 'Desteklenmiyor'; return; }
-  const states = {granted:'✓ Aktif', denied:'✗ Engellendi', default:'İzin Bekleniyor'};
-  el.textContent = states[Notification.permission] || '—';
-  el.className = 'prof-val' + (Notification.permission === 'granted' ? ' hi' : '');
-}
+window.addEventListener('load', async () => {
+  setTheme(theme, false);
+  initCanvas();
 
-// UYGULAMA YÜKLENDİĞİNDE ÇALIŞACAKLAR
-window.addEventListener('load', () => {
-  setTheme(currentTheme, false);
-  spawnParticles();
+  await new Promise(r => setTimeout(r, 2200));
 
-  setTimeout(() => {
-    document.getElementById('splash').style.opacity = '0';
-    setTimeout(() => {
-      document.getElementById('splash').style.display = 'none';
-      document.getElementById('app').classList.add('visible');
-    }, 800);
-  }, 2000);
+  const splash = document.getElementById('splash');
+  splash.classList.add('gone');
+  setTimeout(() => { splash.style.display='none'; document.getElementById('app').classList.add('on'); }, 900);
+  clearTimeout(safetyTimer);
 
+  // SW register
   if ('serviceWorker' in navigator) {
-    navigator.serviceWorker.register('./sw.js').catch(()=>{});
+    try { await navigator.serviceWorker.register('./sw.js'); } catch(e) {}
   }
 
-  updateClock(); setInterval(updateClock, 1000);
-  updateCountdowns(); setInterval(updateCountdowns, 1000);
-  checkAlarms(); setInterval(checkAlarms, 15000);
+  // Start everything
+  tickClock(); setInterval(tickClock, 1000);
+  tickCountdowns(); setInterval(tickCountdowns, 1000);
 
-  renderPlan(); renderTasks(); renderAlarms();
-  updateStats(); updateNotifStatus();
+  renderPlan();
+  renderTasks();
+  renderAlarms();
+  renderToday();
+  updateStats();
+  updateNotifStatus();
+  scheduleAllAlarms();
+  setInterval(scheduleAllAlarms, 60 * 60 * 1000); // reschedule every hour
 });
 
-// ARAYÜZ VE FONKSİYONLAR
-function spawnParticles() {
-  const container = document.getElementById('particles');
-  for (let i = 0; i < 20; i++) {
-    const p = document.createElement('div');
-    p.className = 'particle';
-    const size = Math.random() * 3 + 1;
-    p.style.cssText = `width:${size}px;height:${size}px;left:${Math.random()*100}%;background:var(--accent);animation-duration:${Math.random()*20+15}s;animation-delay:${Math.random()*20}s;opacity:0;`;
-    container.appendChild(p);
+// ══════════════════════════════════════
+// BACKGROUND CANVAS (stars)
+// ══════════════════════════════════════
+function initCanvas() {
+  const cv = document.getElementById('bgc');
+  const ctx = cv.getContext('2d');
+  let stars = [];
+  function resize() {
+    cv.width = window.innerWidth;
+    cv.height = window.innerHeight;
+    stars = Array.from({length:80}, () => ({
+      x: Math.random()*cv.width, y: Math.random()*cv.height,
+      r: Math.random()*1.2+0.2, o: Math.random()*0.5+0.1,
+      sp: Math.random()*0.003+0.001
+    }));
   }
+  function draw() {
+    ctx.clearRect(0,0,cv.width,cv.height);
+    stars.forEach(s => {
+      s.o += s.sp; if(s.o>0.7||s.o<0.1) s.sp=-s.sp;
+      ctx.beginPath(); ctx.arc(s.x,s.y,s.r,0,Math.PI*2);
+      ctx.fillStyle = `rgba(150,200,255,${s.o})`; ctx.fill();
+    });
+    requestAnimationFrame(draw);
+  }
+  resize(); window.addEventListener('resize', resize); draw();
 }
 
-function updateClock() {
+// ══════════════════════════════════════
+// CLOCK
+// ══════════════════════════════════════
+function tickClock() {
   const n = new Date();
-  document.getElementById('live-time').textContent = [n.getHours(),n.getMinutes(),n.getSeconds()].map(v=>String(v).padStart(2,'0')).join(':');
+  document.getElementById('clock').textContent =
+    [n.getHours(),n.getMinutes(),n.getSeconds()].map(v=>String(v).padStart(2,'0')).join(':');
 }
 
-const ALES_DATE = new Date('2026-05-10T10:15:00');
-const TECIL_DATE = new Date('2026-07-31T23:59:59');
-const START_DATE = new Date('2026-04-06T00:00:00');
+// ══════════════════════════════════════
+// COUNTDOWNS
+// ══════════════════════════════════════
+const ALES_T = new Date('2026-05-10T10:15:00');
+const TECIL_T = new Date('2026-07-31T23:59:59');
+const START_T = new Date('2026-04-06T00:00:00');
 
-function cdHTML(diff, colorOverride) {
-  const d = Math.floor(diff/86400000);
-  const h = Math.floor((diff%86400000)/3600000);
-  const m = Math.floor((diff%3600000)/60000);
-  const s = Math.floor((diff%60000)/1000);
-  const style = colorOverride ? `style="color:${colorOverride};-webkit-text-fill-color:${colorOverride}"` : '';
-  return ['GÜN|'+d,'SAAT|'+String(h).padStart(2,'0'),'DAK|'+String(m).padStart(2,'0'),'SAN|'+String(s).padStart(2,'0')].map(x => {
-    const [lbl,num] = x.split('|'); return `<div class="cd-box"><div class="cd-num" ${style}>${num}</div><div class="cd-label">${lbl}</div></div>`;
+function tickCountdowns() {
+  const now = new Date();
+  const d1 = ALES_T - now, d2 = TECIL_T - now;
+
+  function cdHTML(diff, col) {
+    const D=Math.floor(diff/86400000), H=Math.floor((diff%86400000)/3600000);
+    const M=Math.floor((diff%3600000)/60000), SS=Math.floor((diff%60000)/1000);
+    const st = col ? `style="-webkit-text-fill-color:${col};color:${col}"` : '';
+    return [['GÜN',D],['SAAT',String(H).padStart(2,'0')],['DAK',String(M).padStart(2,'0')],['SAN',String(SS).padStart(2,'0')]]
+      .map(([l,v])=>`<div class="cdb"><div class="cdn" ${st}>${v}</div><div class="cdl">${l}</div></div>`).join('');
+  }
+
+  if (d1>0) {
+    document.getElementById('cd1').innerHTML = cdHTML(d1);
+    const pct = Math.min(100,Math.max(0,Math.round((now-START_T)/(ALES_T-START_T)*100)));
+    document.getElementById('pfill').style.width = pct+'%';
+    document.getElementById('ppct').textContent = pct+'%';
+  }
+  if (d2>0) document.getElementById('cd2').innerHTML = cdHTML(d2,'#ffa000');
+}
+
+// ══════════════════════════════════════
+// DYNAMIC TODAY
+// ══════════════════════════════════════
+function renderToday() {
+  const now = new Date();
+  const dayNames = ['Pazar','Pazartesi','Salı','Çarşamba','Perşembe','Cuma','Cumartesi'];
+  const dow = now.getDay(); // 0=Sun
+  const idx = dow; // 0-6
+  const focus = DAILY_FOCUS[idx];
+
+  const dateStr = now.toLocaleDateString('tr-TR', { weekday:'long', day:'numeric', month:'long' });
+  document.getElementById('todayDay').textContent = dateStr.toUpperCase();
+  document.getElementById('todayMain').innerHTML = focus.focus.replace(/\n/g,'<br>');
+  document.getElementById('todayNext').textContent = focus.next;
+
+  // Highlight active plan row
+  renderPlanHighlight();
+}
+
+// ══════════════════════════════════════
+// DAILY PLAN
+// ══════════════════════════════════════
+function renderPlan() {
+  const now = new Date();
+  const dateStr = now.toLocaleDateString('tr-TR',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+  document.getElementById('planDate').textContent = dateStr.toUpperCase();
+  renderPlanHighlight();
+}
+
+function renderPlanHighlight() {
+  const now = new Date();
+  const curMin = now.getHours()*60 + now.getMinutes();
+
+  document.getElementById('planList').innerHTML = PLAN.map((p,i) => {
+    const [ph,pm] = p.t.split(':').map(Number);
+    const pMin = ph*60+pm;
+    const nextMin = i < PLAN.length-1 ? (() => { const [nh,nm] = PLAN[i+1].t.split(':').map(Number); return nh*60+nm; })() : 1440;
+    const isNow = curMin >= pMin && curMin < nextMin;
+    const past = curMin >= nextMin;
+    return `
+      <div class="prow2${isNow?' now':''}${past?' done':''}">
+        <div class="ptime">${p.t}</div>
+        <div class="pvline">
+          <div class="pdot" style="${p.hi?'background:var(--a1);box-shadow:0 0 8px var(--glow)':p.c?'background:'+p.c+';border-color:'+p.c:''}"></div>
+          ${i<PLAN.length-1?'<div class="plinev"></div>':''}
+        </div>
+        <div class="ptxt">
+          <div class="ptitle" style="${p.hi?'color:var(--a1)':''}${past?';opacity:0.45':''}">${p.title}</div>
+          <div class="psub">${p.sub}</div>
+        </div>
+      </div>`;
   }).join('');
 }
 
-function updateCountdowns() {
-  const now = new Date();
-  const d1 = ALES_DATE - now; const d2 = TECIL_DATE - now;
-  if (d1 > 0) {
-    document.getElementById('cd-ales').innerHTML = cdHTML(d1);
-    const total = ALES_DATE - START_DATE; const passed = now - START_DATE;
-    const pct = Math.min(100, Math.max(0, Math.round(passed/total*100)));
-    document.getElementById('prog-fill').style.width = pct + '%';
-    document.getElementById('prog-pct').textContent = pct + '%';
-  }
-  if (d2 > 0) { document.getElementById('cd-tecil').innerHTML = cdHTML(d2, '#ffa000'); }
-}
+// Update plan highlight every minute
+setInterval(renderPlanHighlight, 30000);
 
-function renderPlan() {
-  document.getElementById('plan-list').innerHTML = PLAN_DATA.map((p,i) => `
-    <div class="plan-row${p.highlight?' highlight':''}">
-      <div class="plan-time">${p.time}</div>
-      <div class="plan-line">
-        <div class="plan-dot" style="${p.highlight?'background:var(--accent);box-shadow:0 0 8px var(--glow)':p.color?'background:'+p.color+';border-color:'+p.color:''}"></div>
-        ${i < PLAN_DATA.length-1 ? '<div class="plan-vline"></div>' : ''}
-      </div>
-      <div class="plan-content">
-        <div class="plan-title" style="${p.highlight?'color:var(--accent)':''}">${p.title}</div>
-        <div class="plan-sub">${p.sub}</div>
-      </div>
-    </div>
-  `).join('');
-}
-
-function taskHTML(t, badgeClass, badgeText) {
-  const isDone = !!doneTasks[t.id];
-  return `<div class="task${isDone?' done':''}" id="task-${t.id}" onclick="toggleTask('${t.id}')"><div class="task-chk"></div><div class="task-body"><div class="task-title">${t.title}</div><div class="task-sub">${t.sub}</div></div><div class="badge ${badgeClass}">${badgeText}</div></div>`;
+// ══════════════════════════════════════
+// TASKS
+// ══════════════════════════════════════
+function taskHTML(t, bc, bt) {
+  const done = !!doneTasks[t.id];
+  return `<div class="task${done?' done':''}" id="k${t.id}" onclick="toggleTask('${t.id}')">
+    <div class="tchk"></div>
+    <div class="tbody"><div class="ttitle">${t.title}</div><div class="tsub">${t.sub}</div></div>
+    <div class="bdg ${bc}">${bt}</div>
+  </div>`;
 }
 
 function renderTasks() {
-  document.getElementById('tasks-fire').innerHTML = TASKS_DATA.fire.map(t=>taskHTML(t,'b-fire','ACİL')).join('');
-  document.getElementById('tasks-month').innerHTML = TASKS_DATA.month.map(t=>taskHTML(t,'b-amber','BU AY')).join('');
-  document.getElementById('tasks-later').innerHTML = TASKS_DATA.later.map(t=>taskHTML(t,'b-green','1-3 AY')).join('');
-  document.getElementById('tasks-frozen').innerHTML = TASKS_DATA.frozen.map(t=>taskHTML(t,'b-gray','BEKLET')).join('');
+  document.getElementById('tf').innerHTML = TASKS.fire.map(t=>taskHTML(t,'bfire','ACİL')).join('');
+  document.getElementById('tm').innerHTML = TASKS.month.map(t=>taskHTML(t,'bamb','BU AY')).join('');
+  document.getElementById('tl').innerHTML = TASKS.later.map(t=>taskHTML(t,'bgre','1-3 AY')).join('');
+  document.getElementById('tz').innerHTML = TASKS.frozen.map(t=>taskHTML(t,'bgry','BEKLET')).join('');
 }
 
 function toggleTask(id) {
-  if (doneTasks[id]) { delete doneTasks[id]; } else { doneTasks[id] = Date.now(); playTick(); }
-  saveData('done', doneTasks);
-  const el = document.getElementById('task-'+id);
-  if (el) el.classList.toggle('done', !!doneTasks[id]);
-  const chk = el?.querySelector('.task-chk'); if (chk) chk.className = 'task-chk' + (doneTasks[id] ? ' done' : '');
-  const title = el?.querySelector('.task-title'); if (title) title.className = 'task-title' + (doneTasks[id] ? ' done' : '');
+  if (doneTasks[id]) delete doneTasks[id];
+  else { doneTasks[id] = Date.now(); tick(); }
+  S.set('done', doneTasks);
+  const el = document.getElementById('k'+id);
+  if (!el) return;
+  const done = !!doneTasks[id];
+  el.classList.toggle('done', done);
+  el.querySelector('.tchk').classList.toggle('done', done);
+  el.querySelector('.ttitle').classList.toggle('done', done);
   updateStats();
 }
 
 function updateStats() {
-  const done = Object.keys(doneTasks).length;
-  document.getElementById('st-done').textContent = done;
-  document.getElementById('st-total').textContent = 12;
+  document.getElementById('stdone').textContent = Object.keys(doneTasks).length;
 }
 
-function resetTasks() {
-  if (confirm('Tüm görev ilerlemesi silinecek. Emin misin?')) {
-    doneTasks = {}; saveData('done', {}); renderTasks(); updateStats();
-  }
+function resetAll() {
+  if (!confirm('Tüm ilerleme silinecek. Emin misin?')) return;
+  doneTasks = {}; S.set('done',{}); renderTasks(); updateStats();
 }
 
-function showTab(name, btn) {
-  document.querySelectorAll('[id^="tab-"]').forEach(t => t.style.display = 'none');
-  const el = document.getElementById('tab-'+name);
-  el.style.display = 'block'; el.classList.add('fade-in'); setTimeout(() => el.classList.remove('fade-in'), 300);
-  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active')); btn.classList.add('active');
-  document.getElementById('content').scrollTop = 0;
+// ══════════════════════════════════════
+// TABS
+// ══════════════════════════════════════
+function gotoTab(name, el) {
+  document.querySelectorAll('[id^="tab-"]').forEach(t => t.style.display='none');
+  const t = document.getElementById('tab-'+name);
+  t.style.display='block'; t.classList.add('fu'); setTimeout(()=>t.classList.remove('fu'),350);
+  document.querySelectorAll('.tb').forEach(b => b.classList.remove('on'));
+  el.classList.add('on');
+  document.getElementById('cnt').scrollTop=0;
 }
 
-function openSheet(id) { document.getElementById(id).classList.add('open'); const btn = document.getElementById('alarm-hbtn'); if(btn){btn.classList.add('ringing');setTimeout(()=>btn.classList.remove('ringing'),700);} }
-function closeSheet(id) { document.getElementById(id).classList.remove('open'); }
-function closeSheetOutside(e, id) { if (e.target === document.getElementById(id)) closeSheet(id); }
+// ══════════════════════════════════════
+// ALARM SHEET
+// ══════════════════════════════════════
+function openSheet() {
+  document.getElementById('alarmSheet').classList.add('open');
+  const b = document.getElementById('abtn');
+  b.classList.add('ringing'); setTimeout(()=>b.classList.remove('ringing'),800);
+}
+function closeSheet() { document.getElementById('alarmSheet').classList.remove('open'); }
+function closeIfBg(e) { if(e.target===document.getElementById('alarmSheet')) closeSheet(); }
 
 function renderAlarms() {
-  document.getElementById('alarm-list-dom').innerHTML = ALARMS_DATA.map(a => `
-    <div class="alarm-row">
-      <div class="alarm-info"><div class="alarm-time">${a.time}</div><div class="alarm-desc">${a.desc}</div></div>
-      <div class="toggle-wrap"><div class="toggle${a.on?' on':''}" id="tog-${a.id}" onclick="toggleAlarm(${a.id})"></div></div>
+  document.getElementById('alarmDom').innerHTML = ALARMS.map(a=>`
+    <div class="arow">
+      <div class="ainfo">
+        <div class="atime">${a.time}</div>
+        <div class="adesc">${a.desc}</div>
+      </div>
+      <div class="tgl${a.on?' on':''}" id="tg${a.id}" onclick="toggleAlarm(${a.id})"></div>
     </div>`).join('');
 }
 
 function toggleAlarm(id) {
-  ALARMS_DATA[id].on = !ALARMS_DATA[id].on;
-  document.getElementById('tog-'+id).classList.toggle('on', ALARMS_DATA[id].on);
-  saveData('alarms', ALARMS_DATA.map(a=>a.on));
+  ALARMS[id].on = !ALARMS[id].on;
+  document.getElementById('tg'+id).classList.toggle('on', ALARMS[id].on);
+  S.set('alarms', ALARMS.map(a=>a.on));
+  scheduleAllAlarms();
 }
 
-let lastAlarmFired = {};
-function checkAlarms() {
+// ══════════════════════════════════════
+// ALARM SCHEDULING — works when app is open
+// ══════════════════════════════════════
+function scheduleAllAlarms() {
+  alarmTimers.forEach(clearTimeout);
+  alarmTimers = [];
+
+  if (Notification.permission !== 'granted') return;
+
   const now = new Date();
-  const hm = String(now.getHours()).padStart(2,'0') + ':' + String(now.getMinutes()).padStart(2,'0');
-  const today = now.toDateString();
-  ALARMS_DATA.forEach(a => {
-    const key = today + '_' + a.id;
-    if (a.on && a.time === hm && !lastAlarmFired[key]) { lastAlarmFired[key] = true; fireAlarm(a); }
+  ALARMS.forEach(a => {
+    if (!a.on) return;
+    const [h, m] = a.time.split(':').map(Number);
+    const target = new Date();
+    target.setHours(h, m, 0, 0);
+    if (target <= now) target.setDate(target.getDate()+1); // tomorrow if passed
+    const delay = target - now;
+
+    const tid = setTimeout(() => {
+      fireAlarm(a);
+      // Re-schedule for next day
+      setTimeout(() => scheduleAllAlarms(), 1000);
+    }, delay);
+    alarmTimers.push(tid);
+  });
+
+  // Also send via SW for background support
+  if ('serviceWorker' in navigator && navigator.serviceWorker.controller) {
+    ALARMS.forEach(a => {
+      if (!a.on) return;
+      const [h,m] = a.time.split(':').map(Number);
+      const target = new Date(); target.setHours(h,m,0,0);
+      if (target <= now) target.setDate(target.getDate()+1);
+      const delay = target - now;
+      navigator.serviceWorker.controller.postMessage({
+        type:'SCHEDULE_ALARM', delay, alarmId: a.id,
+        title:'⏰ Elysium Bot', body: a.time + ' — ' + a.desc
+      });
+    });
+  }
+}
+
+function fireAlarm(a) {
+  playAlarm();
+  vibrate([400,150,400,150,400,150,400]);
+  const b = document.getElementById('abtn');
+  b.classList.add('ringing'); setTimeout(()=>b.classList.remove('ringing'),800);
+  b.classList.add('lit'); setTimeout(()=>b.classList.remove('lit'),5000);
+
+  if (Notification.permission==='granted') {
+    navigator.serviceWorker?.ready.then(reg => {
+      reg.showNotification('⏰ Elysium Bot', {
+        body: a.time + ' — ' + a.desc,
+        icon:'./icon.svg', badge:'./icon.svg',
+        tag:'alarm-'+a.id, renotify:true,
+        vibrate:[400,150,400,150,400],
+        requireInteraction: true
+      });
+    }).catch(() => {
+      new Notification('⏰ Elysium Bot', { body: a.time+' — '+(a.desc||'Alarm'), icon:'./icon.svg' });
+    });
+  }
+}
+
+// ══════════════════════════════════════
+// NOTIFICATIONS
+// ══════════════════════════════════════
+async function reqNotif() {
+  const perm = await Notification.requestPermission();
+  updateNotifStatus();
+  if (perm === 'granted') {
+    scheduleAllAlarms();
+    // Try Firebase token
+    try {
+      if (window._fbMessaging) {
+        const { getToken, messaging } = window._fbMessaging;
+        const token = await getToken(messaging, {
+          vapidKey:'BIO3dLGuJCEipJ1v0zHnxoO0iuewsV9ekC_Rsc1bockfBb35l66a9wa6GwWp_kWQoAYscIE5W6dYhSU9KJp7ikg'
+        });
+        S.set('fcm_token', token);
+        document.getElementById('fcmstat').textContent = '✓ ' + token.substring(0,20)+'...';
+        console.log('FCM TOKEN:', token);
+      }
+    } catch(e) { document.getElementById('fcmstat').textContent = 'Token alınamadı'; }
+  }
+}
+
+function testNotif() {
+  if (Notification.permission !== 'granted') { alert('Önce bildirim izni al!'); return; }
+  navigator.serviceWorker?.ready.then(reg => {
+    reg.showNotification('✅ Test Başarılı!', {
+      body:'Elysium Bot bildirimleri çalışıyor.',
+      icon:'./icon.svg', vibrate:[300,100,300]
+    });
+  }).catch(() => new Notification('✅ Test', {body:'Çalışıyor!'}));
+  vibrate([300,100,300]);
+}
+
+function updateNotifStatus() {
+  const el = document.getElementById('nstat');
+  if (!el || !('Notification' in window)) { if(el) el.textContent='Desteklenmiyor'; return; }
+  const s = {granted:'✓ Aktif',denied:'✗ Engellendi',default:'İzin Bekleniyor'};
+  el.textContent = s[Notification.permission]||'—';
+  el.className = 'pv ' + (Notification.permission==='granted'?'notif-ok':'notif-no');
+}
+
+// ══════════════════════════════════════
+// VIBRATE
+// ══════════════════════════════════════
+function vibrate(pattern) {
+  try { navigator.vibrate && navigator.vibrate(pattern); } catch(e){}
+}
+
+// ══════════════════════════════════════
+// MUSIC — Interstellar piano
+// ══════════════════════════════════════
+let AC, musicOn=false, musicGain=null;
+
+// Interstellar "Cornfield Chase" / main theme notes
+// More accurate Zimmer piano pattern
+const NOTES = [
+  // E minor pentatonic + chromatic Zimmer style
+  // [freq, duration_beats, velocity]
+  [329.63,2,0.7],[246.94,1,0.5],[293.66,1,0.6],
+  [329.63,2,0.8],[392.00,1,0.5],[369.99,1,0.4],
+  [329.63,2,0.7],[293.66,1,0.5],[261.63,1,0.5],
+  [246.94,4,0.6],
+
+  [261.63,2,0.7],[196.00,1,0.5],[220.00,1,0.5],
+  [246.94,2,0.8],[293.66,1,0.6],[329.63,1,0.7],
+  [392.00,2,0.8],[369.99,1,0.5],[329.63,1,0.6],
+  [293.66,4,0.6],
+
+  [369.99,2,0.7],[329.63,1,0.5],[293.66,1,0.5],
+  [329.63,2,0.8],[440.00,2,0.7],
+  [415.30,2,0.6],[369.99,1,0.5],[329.63,1,0.6],
+  [293.66,2,0.5],[246.94,2,0.5],
+
+  [329.63,2,0.7],[246.94,1,0.4],[220.00,1,0.4],
+  [196.00,4,0.6],
+];
+
+// Bass chord pattern (low E minor chords)
+const BASS = [
+  [82.41,4],[73.42,4],[87.31,4],[82.41,4],
+  [65.41,4],[73.42,4],[82.41,4],[77.78,4],
+];
+
+function pianoNote(freq, dur, vel, t) {
+  if (!AC) return;
+  // Multiple harmonics for piano sound
+  const harmonics = [1, 2, 3, 4.1, 5.2];
+  const volumes = [1, 0.5, 0.25, 0.08, 0.04];
+
+  harmonics.forEach((h, i) => {
+    const osc = AC.createOscillator();
+    const env = AC.createGain();
+    osc.connect(env); env.connect(musicGain);
+    osc.type = i === 0 ? 'sine' : 'sine';
+    osc.frequency.value = freq * h;
+
+    const v = vel * volumes[i];
+    // Piano ADSR: fast attack, exponential decay
+    env.gain.setValueAtTime(0, t);
+    env.gain.linearRampToValueAtTime(v, t + 0.008); // fast attack
+    env.gain.exponentialRampToValueAtTime(v * 0.7, t + 0.1);
+    env.gain.exponentialRampToValueAtTime(v * 0.3, t + dur * 0.5);
+    env.gain.exponentialRampToValueAtTime(0.0001, t + dur);
+    osc.start(t); osc.stop(t + dur + 0.05);
   });
 }
 
-function fireAlarm(alarm) {
-  playAlarmSound();
-  const btn = document.getElementById('alarm-hbtn');
-  if(btn){btn.classList.add('ringing');setTimeout(()=>btn.classList.remove('ringing'),700);}
-  if ('Notification' in window && Notification.permission === 'granted') {
-    new Notification('⏰ Elysium Bot', { body: alarm.time + ' — ' + alarm.desc, icon: './icon.svg', tag: 'elysium-alarm-' + alarm.id, renotify: true, vibrate: [300, 150, 300, 150, 300] });
-  }
-}
+function startMusic() {
+  if (!AC) AC = new (window.AudioContext || window.webkitAudioContext)();
+  if (AC.state === 'suspended') AC.resume();
 
-let audioCtx, musicPlaying = false, musicNodes = [];
-function buildStayMelody() {
-  const c = audioCtx; const master = c.createGain(); master.gain.value = 0.18; master.connect(c.destination);
-  const delay = c.createDelay(2); delay.delayTime.value = 0.4;
-  const feedback = c.createGain(); feedback.gain.value = 0.35;
-  const delayGain = c.createGain(); delayGain.gain.value = 0.3;
-  delay.connect(feedback); feedback.connect(delay); delay.connect(delayGain); delayGain.connect(master);
+  musicGain = AC.createGain();
 
-  const melody = [164.81, 246.94, 329.63, 392.00, 440.00, 493.88, 587.33, 659.25, 587.33, 493.88, 440.00, 392.00, 329.63, 246.94, 164.81, 196.00, 246.94, 329.63, 392.00, 493.88, 587.33, 659.25, 587.33, 493.88];
-  const dur = 0.8; const loops = 9999; let loopCount = 0; const totalNotes = melody.length;
+  // Reverb via convolver (impulse response simulation)
+  const convolver = AC.createConvolver();
+  const reverbGain = AC.createGain();
+  const dryGain = AC.createGain();
 
-  function playLoop(startTime) {
-    if (!musicPlaying) return;
-    melody.forEach((freq, i) => {
-      const t = startTime + i * dur;
-      const osc1 = c.createOscillator(); const osc2 = c.createOscillator(); const env = c.createGain();
-      osc1.type = 'sine'; osc2.type = 'sine'; osc1.frequency.value = freq; osc2.frequency.value = freq * 2;
-      osc1.connect(env); osc2.connect(env); env.connect(master); env.connect(delay);
-      const g2 = c.createGain(); g2.gain.value = 0.3; osc2.connect(g2); g2.connect(master);
-      env.gain.setValueAtTime(0, t); env.gain.linearRampToValueAtTime(0.6, t + 0.05); env.gain.setValueAtTime(0.5, t + dur * 0.6); env.gain.linearRampToValueAtTime(0, t + dur);
-      osc1.start(t); osc1.stop(t + dur); osc2.start(t); osc2.stop(t + dur); musicNodes.push(osc1, osc2);
-    });
-    for (let i = 0; i < totalNotes; i++) {
-      const t = startTime + i * dur;
-      const bass = c.createOscillator(); const bassEnv = c.createGain(); bass.type = 'sine'; bass.frequency.value = melody[i] / 2;
-      bass.connect(bassEnv); bassEnv.connect(master); bassEnv.gain.setValueAtTime(0, t); bassEnv.gain.linearRampToValueAtTime(0.4, t + 0.1); bassEnv.gain.linearRampToValueAtTime(0, t + dur * 0.8);
-      bass.start(t); bass.stop(t + dur); musicNodes.push(bass);
+  // Simple reverb impulse
+  const len = AC.sampleRate * 2.5;
+  const buf = AC.createBuffer(2, len, AC.sampleRate);
+  for (let c = 0; c < 2; c++) {
+    const d = buf.getChannelData(c);
+    for (let i = 0; i < len; i++) {
+      d[i] = (Math.random()*2-1) * Math.pow(1 - i/len, 2.5);
     }
-    const nextStart = startTime + totalNotes * dur; loopCount++;
-    if (loopCount < loops && musicPlaying) { setTimeout(() => { if(musicPlaying) playLoop(c.currentTime); }, (totalNotes * dur - 0.5) * 1000); }
   }
-  playLoop(c.currentTime + 0.1); return master;
+  convolver.buffer = buf;
+
+  musicGain.connect(dryGain); dryGain.connect(AC.destination);
+  musicGain.connect(convolver); convolver.connect(reverbGain); reverbGain.connect(AC.destination);
+  musicGain.gain.value = 0.3;
+  dryGain.gain.value = 0.6;
+  reverbGain.gain.value = 0.4;
+
+  const BPM = 42;
+  const beat = 60 / BPM;
+
+  function scheduleLoop(startT) {
+    if (!musicOn) return;
+    let t = startT;
+
+    NOTES.forEach(([freq, beats, vel]) => {
+      pianoNote(freq, beats * beat * 0.95, vel, t);
+      t += beats * beat;
+    });
+
+    // Bass notes (soft, underneath)
+    let bt = startT;
+    BASS.forEach(([freq, beats]) => {
+      const bosc = AC.createOscillator();
+      const benv = AC.createGain();
+      bosc.connect(benv); benv.connect(reverbGain);
+      bosc.type = 'sine';
+      bosc.frequency.value = freq;
+      const dur = beats * beat;
+      benv.gain.setValueAtTime(0, bt);
+      benv.gain.linearRampToValueAtTime(0.15, bt+0.02);
+      benv.gain.exponentialRampToValueAtTime(0.08, bt+dur*0.4);
+      benv.gain.exponentialRampToValueAtTime(0.0001, bt+dur);
+      bosc.start(bt); bosc.stop(bt+dur+0.1);
+      bt += beats * beat;
+    });
+
+    // Total loop duration
+    const loopDur = NOTES.reduce((s,[,b])=>s+b,0) * beat;
+    if (musicOn) setTimeout(() => scheduleLoop(AC.currentTime), (loopDur - 0.3) * 1000);
+  }
+
+  scheduleLoop(AC.currentTime + 0.1);
 }
 
 function toggleMusic() {
-  if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-  if (audioCtx.state === 'suspended') audioCtx.resume();
-  musicPlaying = !musicPlaying;
-  const btn = document.querySelector('.music-btn'); const wave = document.getElementById('music-wave'); const icon = document.getElementById('music-icon'); const hbtn = document.getElementById('music-hbtn');
-  if (musicPlaying) { buildStayMelody(); btn.textContent = '⏸'; wave.classList.remove('paused'); icon.classList.add('playing'); hbtn.classList.add('playing'); } 
-  else { musicNodes.forEach(n => { try { n.stop(); } catch(e){} }); musicNodes = []; btn.textContent = '▶'; wave.classList.add('paused'); icon.classList.remove('playing'); hbtn.classList.remove('playing'); }
+  if (!AC) AC = new (window.AudioContext||window.webkitAudioContext)();
+  if (AC.state==='suspended') AC.resume();
+
+  musicOn = !musicOn;
+  const bar = document.getElementById('mbar');
+  const wave = document.getElementById('mwave');
+  const pbtn = document.getElementById('mplaybtn');
+  const mbtn = document.getElementById('mbtn');
+  const disc = document.getElementById('mdisc');
+
+  if (musicOn) {
+    startMusic();
+    pbtn.textContent = '⏸'; wave.classList.remove('paused');
+    bar.classList.add('playing'); disc.style.animation='spin2 3s linear infinite';
+    mbtn.classList.add('lit');
+  } else {
+    if (musicGain) { musicGain.gain.linearRampToValueAtTime(0, AC.currentTime+0.5); }
+    pbtn.textContent = '▶'; wave.classList.add('paused');
+    bar.classList.remove('playing'); disc.style.animation='';
+    mbtn.classList.remove('lit');
+  }
 }
 
-function playTick() {
+// ══════════════════════════════════════
+// SOUND EFFECTS
+// ══════════════════════════════════════
+function tick() {
   try {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination);
-    o.frequency.value = 1200; o.type = 'sine'; g.gain.setValueAtTime(0.25, audioCtx.currentTime); g.gain.exponentialRampToValueAtTime(0.001, audioCtx.currentTime + 0.12);
-    o.start(); o.stop(audioCtx.currentTime + 0.12);
+    if (!AC) AC = new (window.AudioContext||window.webkitAudioContext)();
+    if (AC.state==='suspended') AC.resume();
+    const o=AC.createOscillator(), g=AC.createGain();
+    o.connect(g); g.connect(AC.destination);
+    o.frequency.value=1400; o.type='sine';
+    g.gain.setValueAtTime(0.2,AC.currentTime);
+    g.gain.exponentialRampToValueAtTime(0.0001,AC.currentTime+0.1);
+    o.start(); o.stop(AC.currentTime+0.1);
   } catch(e){}
 }
 
-function playAlarmSound() {
+function playAlarm() {
   try {
-    if (!audioCtx) audioCtx = new (window.AudioContext || window.webkitAudioContext)();
-    if (audioCtx.state === 'suspended') audioCtx.resume();
-    const freqs = [880,1047,880,1047,880,1047,880,1047];
-    freqs.forEach((f,i) => {
-      const o = audioCtx.createOscillator(); const g = audioCtx.createGain(); o.connect(g); g.connect(audioCtx.destination);
-      o.type = 'square'; o.frequency.value = f; const t = audioCtx.currentTime + i * 0.22;
-      g.gain.setValueAtTime(0, t); g.gain.linearRampToValueAtTime(0.35, t + 0.02); g.gain.exponentialRampToValueAtTime(0.001, t + 0.20);
-      o.start(t); o.stop(t + 0.21);
+    if (!AC) AC = new (window.AudioContext||window.webkitAudioContext)();
+    if (AC.state==='suspended') AC.resume();
+    // Bell-like alarm tones
+    const seq = [880,1047,1318,1047,880,1047,1318,1047];
+    seq.forEach((f,i)=>{
+      const o=AC.createOscillator(), g=AC.createGain();
+      o.connect(g); g.connect(AC.destination);
+      o.type='sine'; o.frequency.value=f;
+      const t=AC.currentTime+i*0.18;
+      g.gain.setValueAtTime(0,t);
+      g.gain.linearRampToValueAtTime(0.4,t+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001,t+0.16);
+      o.start(t); o.stop(t+0.17);
     });
   } catch(e){}
 }
 
+// ══════════════════════════════════════
+// THEME
+// ══════════════════════════════════════
 function setTheme(name, save=true) {
-  document.body.setAttribute('data-theme', name); currentTheme = name; if(save) saveData('theme', name);
-  document.querySelectorAll('.theme-btn').forEach(b => b.classList.remove('active')); const btn = document.getElementById('th-'+name); if(btn) btn.classList.add('active');
-  const colors = {cosmos:'#050510', ember:'#0d0500', void:'#000000'}; document.getElementById('theme-meta').content = colors[name] || '#050510';
+  document.body.setAttribute('data-theme', name);
+  if (save) S.set('theme', name);
+  document.querySelectorAll('.tbtn').forEach(b=>b.classList.remove('sel'));
+  const b = document.getElementById('th-'+name); if(b) b.classList.add('sel');
+  const colors = {cosmos:'#050510',ember:'#080200',void:'#000000'};
+  document.getElementById('theme-meta').content = colors[name]||'#050510';
 }
 </script>
 </body>
