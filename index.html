@@ -404,14 +404,16 @@ html,body{height:100%;height:100dvh;background:var(--bg0);color:var(--txt);font-
 // FIREBASE — optional, graceful fallback
 // ══════════════════════════════════════
 let messaging = null;
-(async () => {
+let firebaseReadyPromise = null;
+firebaseReadyPromise = (async () => {
   try {
+    document.getElementById('fcmstat').textContent = 'FCM yükleniyor...';
     const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
     const { getMessaging, getToken, onMessage, isSupported } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js');
     const fcmSupported = await isSupported();
     if (!fcmSupported) {
       document.getElementById('fcmstat').textContent = 'Bu tarayıcı/PWA FCM desteklemiyor';
-      return;
+      return false;
     }
     const cfg = {
       apiKey:"AIzaSyCU08n2MbhgejPb8exKyvcPKn-xLkBu0sY",
@@ -426,8 +428,11 @@ let messaging = null;
     onMessage(messaging, p => fireAlarm({ desc: p.notification?.body || 'Hatırlatıcı' }));
     window._fbMessaging = { getToken, messaging };
     document.getElementById('fcmstat').textContent = 'Hazır';
+    return true;
   } catch(e) {
     document.getElementById('fcmstat').textContent = 'Devre dışı';
+    console.error('Firebase init error:', e);
+    return false;
   }
 })();
 
@@ -860,37 +865,51 @@ async function reqNotif() {
     updateNotifStatus();
     return;
   }
+  if (Notification.permission === 'denied') {
+    document.getElementById('fcmstat').textContent = 'Bildirim izni engelli (tarayıcı ayarından aç)';
+    updateNotifStatus();
+    return;
+  }
   const envIssue = fcmEnvIssue();
   if (envIssue) {
     document.getElementById('fcmstat').textContent = envIssue;
   }
   const perm = await Notification.requestPermission();
   updateNotifStatus();
-  if (perm === 'granted') {
-    scheduleAllAlarms();
-    // Try Firebase token
-    try {
-      if (window._fbMessaging) {
-        const { getToken, messaging } = window._fbMessaging;
-        const swReg = await navigator.serviceWorker.ready;
-        const token = await getToken(messaging, {
-          vapidKey:'BIO3dLGuJCEipJ1v0zHnxoO0iuewsV9ekC_Rsc1bockfBb35l66a9wa6GwWp_kWQoAYscIE5W6dYhSU9KJp7ikg',
-          serviceWorkerRegistration: swReg
-        });
-        if (!token) {
-          document.getElementById('fcmstat').textContent = 'Token boş döndü (izin/sunucu kontrol et)';
-          return;
-        }
-        S.set('fcm_token', token);
-        document.getElementById('fcmstat').textContent = '✓ ' + token.substring(0,20)+'...';
-        console.log('FCM TOKEN:', token);
-      } else {
-        document.getElementById('fcmstat').textContent = 'FCM modülü hazır değil';
+  if (perm === 'denied') {
+    document.getElementById('fcmstat').textContent = 'Bildirim izni reddedildi';
+    return;
+  }
+  if (perm !== 'granted') {
+    document.getElementById('fcmstat').textContent = 'Bildirim izni bekleniyor';
+    return;
+  }
+  if (firebaseReadyPromise) {
+    await firebaseReadyPromise;
+  }
+  scheduleAllAlarms();
+  // Try Firebase token
+  try {
+    if (window._fbMessaging) {
+      const { getToken, messaging } = window._fbMessaging;
+      const swReg = await navigator.serviceWorker.ready;
+      const token = await getToken(messaging, {
+        vapidKey:'BIO3dLGuJCEipJ1v0zHnxoO0iuewsV9ekC_Rsc1bockfBb35l66a9wa6GwWp_kWQoAYscIE5W6dYhSU9KJp7ikg',
+        serviceWorkerRegistration: swReg
+      });
+      if (!token) {
+        document.getElementById('fcmstat').textContent = 'Token boş döndü (izin/sunucu kontrol et)';
+        return;
       }
-    } catch(e) {
-      document.getElementById('fcmstat').textContent = 'Token alınamadı · ' + fcmErrorText(e);
-      console.error('FCM token error:', e);
+      S.set('fcm_token', token);
+      document.getElementById('fcmstat').textContent = '✓ ' + token.substring(0,20)+'...';
+      console.log('FCM TOKEN:', token);
+    } else {
+      document.getElementById('fcmstat').textContent = 'FCM modülü hazır değil';
     }
+  } catch(e) {
+    document.getElementById('fcmstat').textContent = 'Token alınamadı · ' + fcmErrorText(e);
+    console.error('FCM token error:', e);
   }
 }
 
