@@ -449,7 +449,7 @@ firebaseReadyPromise = (async () => {
     };
     const app = initializeApp(cfg);
     messaging = getMessaging(app);
-    onMessage(messaging, p => fireAlarm({ desc: p.notification?.body || 'Hatırlatıcı' }));
+    onMessage(messaging, p => fireAlarm({ desc: p.notification?.body || 'Hatırlatıcı', mode:'call' }));
     window._fbMessaging = { getToken, messaging };
     document.getElementById('fcmstat').textContent = 'Hazır';
     return true;
@@ -469,10 +469,12 @@ function fcmEnvIssue() {
 
 function fcmErrorText(err) {
   const code = String(err?.code || '');
+  const msg = String(err?.message || '').toLowerCase();
   if (code.includes('unsupported-browser')) return 'Tarayıcı FCM desteklemiyor';
   if (code.includes('permission-blocked') || code.includes('permission-default')) return 'Bildirim izni verilmedi';
   if (code.includes('token-subscribe-failed')) return 'Push aboneliği başarısız (tarayıcı engeli olabilir)';
   if (code.includes('failed-service-worker-registration')) return 'Service Worker kaydı hatalı';
+  if (msg.includes('push service error') || msg.includes('registration failed')) return 'Push servisi engeli (Brave/Chrome ayarı) - yerel bildirim yine çalışır';
   return err?.message ? ('Hata: ' + err.message) : 'Bilinmeyen hata';
 }
 
@@ -1041,14 +1043,21 @@ async function reqNotif() {
       document.getElementById('fcmstat').textContent = 'FCM modülü hazır değil';
     }
   } catch(e) {
-    document.getElementById('fcmstat').textContent = 'Token alınamadı · ' + fcmErrorText(e);
-    console.error('FCM token error:', e);
+    const cached = S.get('fcm_token', '');
+    const parsed = fcmErrorText(e);
+    if (cached) {
+      document.getElementById('fcmstat').textContent = '✓ (önceki token) ' + cached.substring(0,20) + '...';
+    } else {
+      document.getElementById('fcmstat').textContent = 'Token alınamadı · ' + parsed;
+    }
+    console.warn('FCM token warning:', e);
   }
 }
 
 function testNotif() {
   if (!('Notification' in window)) { alert('Bu cihaz bildirim API desteklemiyor.'); return; }
   if (Notification.permission !== 'granted') { alert('Önce bildirim izni al!'); return; }
+  playCallTone();
   navigator.serviceWorker?.ready.then(reg => {
     if (!reg?.active) throw new Error('No active SW registration');
     reg.showNotification('✅ Test Başarılı!', {
@@ -1242,17 +1251,17 @@ function playAlarm() {
   try {
     if (!AC) AC = new (window.AudioContext||window.webkitAudioContext)();
     if (AC.state==='suspended') AC.resume();
-    // Bell-like alarm tones
-    const seq = [880,1047,1318,1047,880,1047,1318,1047];
+    // Longer bell-like alarm tones
+    const seq = [880,1047,1318,1047,880,1047,1318,1047,988,1174,1396,1174,988,1174,1396,1174];
     seq.forEach((f,i)=>{
       const o=AC.createOscillator(), g=AC.createGain();
       o.connect(g); g.connect(AC.destination);
       o.type='sine'; o.frequency.value=f;
-      const t=AC.currentTime+i*0.18;
+      const t=AC.currentTime+i*0.22;
       g.gain.setValueAtTime(0,t);
-      g.gain.linearRampToValueAtTime(0.4,t+0.02);
-      g.gain.exponentialRampToValueAtTime(0.0001,t+0.16);
-      o.start(t); o.stop(t+0.17);
+      g.gain.linearRampToValueAtTime(0.38,t+0.03);
+      g.gain.exponentialRampToValueAtTime(0.0001,t+0.2);
+      o.start(t); o.stop(t+0.21);
     });
   } catch(e){}
 }
@@ -1261,17 +1270,18 @@ function playCallTone() {
   try {
     if (!AC) AC = new (window.AudioContext||window.webkitAudioContext)();
     if (AC.state==='suspended') AC.resume();
-    const pulses = [660,0,660,0,660,0,660,0];
+    // Longer "incoming call" style cadence
+    const pulses = [660,880,0,660,880,0,660,880,0,660,880,0,660,880,0,660,880,0];
     pulses.forEach((f,i)=>{
       if (!f) return;
       const o=AC.createOscillator(), g=AC.createGain();
       o.connect(g); g.connect(AC.destination);
       o.type='sine'; o.frequency.value=f;
-      const t=AC.currentTime+i*0.35;
+      const t=AC.currentTime+i*0.28;
       g.gain.setValueAtTime(0,t);
-      g.gain.linearRampToValueAtTime(0.5,t+0.03);
-      g.gain.exponentialRampToValueAtTime(0.0001,t+0.28);
-      o.start(t); o.stop(t+0.29);
+      g.gain.linearRampToValueAtTime(0.52,t+0.02);
+      g.gain.exponentialRampToValueAtTime(0.0001,t+0.23);
+      o.start(t); o.stop(t+0.24);
     });
   } catch(e){}
 }
