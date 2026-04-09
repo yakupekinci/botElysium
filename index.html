@@ -377,6 +377,11 @@ html,body{height:100%;height:100dvh;background:var(--bg0);color:var(--txt);font-
         <button onclick="reqNotif()" style="width:100%;padding:11px;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px;color:var(--a1);font-family:var(--fd);font-size:9px;letter-spacing:2px;cursor:pointer;margin-top:8px">BİLDİRİM İZNİ AL + KAYIT</button>
         <button onclick="testNotif()" style="width:100%;padding:11px;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px;color:var(--a2);font-family:var(--fd);font-size:9px;letter-spacing:2px;cursor:pointer;margin-top:6px">TEST BİLDİRİMİ GÖNDER</button>
       </div>
+      <div class="card"><div class="clbl">ARKA PLANDA AÇIK TUT</div>
+        <div class="prof"><div class="pk">DURUM</div><div class="pv" id="wakestat">Kapalı</div></div>
+        <button id="wakeBtn" onclick="toggleWakeLock()" style="width:100%;padding:11px;background:var(--bg3);border:1px solid var(--bdr);border-radius:8px;color:var(--ok);font-family:var(--fd);font-size:9px;letter-spacing:2px;cursor:pointer;margin-top:8px">CANLI TUT: AÇ</button>
+        <div class="adesc" style="margin-top:8px">Not: Bu mod ekranın uyumasını engeller. Uygulama tamamen kapatılırsa web tarafı yine durur.</div>
+      </div>
       <div class="card"><div class="clbl">ÖZEL HATIRLATICI</div>
         <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
           <input id="caTime" type="time" style="padding:10px;border-radius:8px;background:var(--bg3);border:1px solid var(--bdr);color:var(--txt)">
@@ -673,6 +678,8 @@ let doneTasks = S.get('done', {});
 let alarmStates = S.get('alarms', null);
 let theme = S.get('theme', 'cosmos');
 let alarmTimers = [];
+let wakeLock = null;
+let keepAwake = S.get('keep_awake', false);
 
 if (alarmStates) ALARMS.forEach((a,i) => { a.on = alarmStates[i] !== undefined ? alarmStates[i] : a.on; });
 else ALARMS.forEach(a => a.on = true);
@@ -713,13 +720,69 @@ window.addEventListener('load', async () => {
   renderToday();
   updateStats();
   updateNotifStatus();
+  updateWakeUi();
   setFcmStatusFromCache();
   scheduleAllAlarms();
   scheduleIntervalReminder();
   ensureFcmTokenSilently();
   queueCloudSync(2000);
   setInterval(scheduleAllAlarms, 60 * 60 * 1000); // reschedule every hour
+  if (keepAwake) requestWakeLock();
 });
+
+document.addEventListener('visibilitychange', () => {
+  if (document.visibilityState === 'visible' && keepAwake) requestWakeLock();
+});
+
+async function requestWakeLock() {
+  if (!('wakeLock' in navigator)) {
+    const s = document.getElementById('wakestat');
+    if (s) s.textContent = 'Desteklenmiyor';
+    return;
+  }
+  try {
+    wakeLock = await navigator.wakeLock.request('screen');
+    wakeLock.addEventListener('release', () => {
+      updateWakeUi();
+    });
+    updateWakeUi();
+  } catch (e) {
+    keepAwake = false;
+    S.set('keep_awake', false);
+    updateWakeUi('Açılamadı');
+  }
+}
+
+async function releaseWakeLock() {
+  try {
+    if (wakeLock) await wakeLock.release();
+  } catch(e) {}
+  wakeLock = null;
+  updateWakeUi();
+}
+
+function updateWakeUi(forcedText = '') {
+  const st = document.getElementById('wakestat');
+  const btn = document.getElementById('wakeBtn');
+  if (!st || !btn) return;
+  if (forcedText) {
+    st.textContent = forcedText;
+    btn.textContent = 'CANLI TUT: AÇ';
+    return;
+  }
+  const on = !!(keepAwake && wakeLock);
+  st.textContent = on ? 'Aktif' : (keepAwake ? 'Hazırlanıyor' : 'Kapalı');
+  btn.textContent = on ? 'CANLI TUT: KAPAT' : 'CANLI TUT: AÇ';
+  btn.style.color = on ? 'var(--bad)' : 'var(--ok)';
+}
+
+async function toggleWakeLock() {
+  keepAwake = !keepAwake;
+  S.set('keep_awake', keepAwake);
+  if (keepAwake) await requestWakeLock();
+  else await releaseWakeLock();
+  updateWakeUi();
+}
 
 // ══════════════════════════════════════
 // BACKGROUND CANVAS (stars)
