@@ -1,4 +1,3 @@
-{
   "name": "Elysium Bot",
   "short_name": "Elysium",
   "description": "Kişisel AI Asistan — Yakup Ekinci",
@@ -12,4 +11,3 @@
     { "src": "icon.svg", "sizes": "any", "type": "image/svg+xml", "purpose": "any maskable" }
   ]
 }
-
