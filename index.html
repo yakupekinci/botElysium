@@ -428,12 +428,14 @@ html,body{height:100%;height:100dvh;background:var(--bg0);color:var(--txt);font-
 // FIREBASE — optional, graceful fallback
 // ══════════════════════════════════════
 let messaging = null;
+let db = null;
 let firebaseReadyPromise = null;
 firebaseReadyPromise = (async () => {
   try {
     document.getElementById('fcmstat').textContent = 'FCM yükleniyor...';
     const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
     const { getMessaging, getToken, onMessage, isSupported } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js');
+    const { getFirestore, doc, setDoc, serverTimestamp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-firestore.js');
     const fcmSupported = await isSupported();
     if (!fcmSupported) {
       document.getElementById('fcmstat').textContent = 'Bu tarayıcı/PWA FCM desteklemiyor';
@@ -449,6 +451,8 @@ firebaseReadyPromise = (async () => {
     };
     const app = initializeApp(cfg);
     messaging = getMessaging(app);
+    db = getFirestore(app);
+    window._fbDb = { doc, setDoc, serverTimestamp };
     onMessage(messaging, p => fireAlarm({ desc: p.notification?.body || 'Hatırlatıcı', mode:'call' }));
     window._fbMessaging = { getToken, messaging };
     document.getElementById('fcmstat').textContent = 'Hazır';
@@ -517,6 +521,54 @@ function allAlarmItems() {
   return fixed.concat(custom);
 }
 
+function buildCloudAlarmConfig(token) {
+  return {
+    token,
+    timezone: Intl.DateTimeFormat().resolvedOptions().timeZone || 'UTC',
+    alarms: allAlarmItems().map(a => ({
+      id: String(a.aid || a.id),
+      type: a.kind || 'fixed',
+      time: a.time,
+      desc: a.desc,
+      mode: a.mode || 'normal',
+      on: !!a.on
+    })),
+    interval: {
+      on: !!intervalReminder.on,
+      minutes: Number(intervalReminder.minutes || 0),
+      desc: intervalReminder.desc || 'Hatırlatma',
+      mode: intervalReminder.mode || 'normal'
+    }
+  };
+}
+
+async function saveAlarmConfigToCloud(tokenArg) {
+  if (!db || !window._fbDb) return false;
+  const token = tokenArg || S.get('fcm_token', '');
+  if (!token) return false;
+  const payload = buildCloudAlarmConfig(token);
+  const deviceId = getDeviceId();
+  const { doc, setDoc, serverTimestamp } = window._fbDb;
+  await setDoc(doc(db, 'devices', deviceId), {
+    ...payload,
+    updatedAt: serverTimestamp(),
+    app: 'elysium-web'
+  }, { merge: true });
+  return true;
+}
+
+let cloudSyncTimer = null;
+function queueCloudSync(delay = 800) {
+  if (cloudSyncTimer) clearTimeout(cloudSyncTimer);
+  cloudSyncTimer = setTimeout(async () => {
+    try {
+      if (Notification.permission === 'granted') await saveAlarmConfigToCloud();
+    } catch(e) {
+      console.warn('Cloud sync warning:', e);
+    }
+  }, delay);
+}
+
 // ══════════════════════════════════════
 // STORAGE
 // ══════════════════════════════════════
@@ -524,6 +576,15 @@ const S = {
   get: (k, d) => { try { const v = localStorage.getItem('ely_'+k); return v ? JSON.parse(v) : d; } catch(e) { return d; } },
   set: (k, v) => { try { localStorage.setItem('ely_'+k, JSON.stringify(v)); } catch(e) {} }
 };
+
+function getDeviceId() {
+  let id = S.get('device_id', '');
+  if (!id) {
+    id = 'dev_' + Date.now().toString(36) + Math.random().toString(36).slice(2, 8);
+    S.set('device_id', id);
+  }
+  return id;
+}
 
 // ══════════════════════════════════════
 // DATA
@@ -656,6 +717,7 @@ window.addEventListener('load', async () => {
   scheduleAllAlarms();
   scheduleIntervalReminder();
   ensureFcmTokenSilently();
+  queueCloudSync(2000);
   setInterval(scheduleAllAlarms, 60 * 60 * 1000); // reschedule every hour
 });
 
@@ -882,6 +944,7 @@ function toggleAlarm(id) {
   document.getElementById('tg'+id).classList.toggle('on', ALARMS[id].on);
   S.set('alarms', ALARMS.map(a=>a.on));
   scheduleAllAlarms();
+  queueCloudSync();
 }
 
 function addCustomAlarm() {
@@ -895,6 +958,7 @@ function addCustomAlarm() {
   document.getElementById('caDesc').value = '';
   renderAlarms();
   scheduleAllAlarms();
+  queueCloudSync();
 }
 
 function toggleCustomAlarm(id) {
@@ -904,6 +968,7 @@ function toggleCustomAlarm(id) {
   S.set('custom_alarms', customAlarms);
   renderAlarms();
   scheduleAllAlarms();
+  queueCloudSync();
 }
 
 function deleteCustomAlarm(id) {
@@ -911,6 +976,7 @@ function deleteCustomAlarm(id) {
   S.set('custom_alarms', customAlarms);
   renderAlarms();
   scheduleAllAlarms();
+  queueCloudSync();
 }
 
 function hydrateReminderInputs() {
@@ -933,6 +999,7 @@ function setIntervalReminder() {
   S.set('interval_reminder', intervalReminder);
   scheduleIntervalReminder();
   renderAlarms();
+  queueCloudSync();
 }
 
 function stopIntervalReminder() {
@@ -941,6 +1008,7 @@ function stopIntervalReminder() {
   if (intervalTimer) clearInterval(intervalTimer);
   intervalTimer = null;
   renderAlarms();
+  queueCloudSync();
 }
 
 // ══════════════════════════════════════
@@ -1074,6 +1142,7 @@ async function reqNotif() {
       S.set('fcm_token', token);
       document.getElementById('fcmstat').textContent = '✓ ' + token.substring(0,20)+'...';
       console.log('FCM TOKEN:', token);
+      await saveAlarmConfigToCloud(token);
     } else {
       document.getElementById('fcmstat').textContent = 'FCM modülü hazır değil';
     }
