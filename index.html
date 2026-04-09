@@ -407,7 +407,12 @@ let messaging = null;
 (async () => {
   try {
     const { initializeApp } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-app.js');
-    const { getMessaging, getToken, onMessage } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js');
+    const { getMessaging, getToken, onMessage, isSupported } = await import('https://www.gstatic.com/firebasejs/10.12.2/firebase-messaging.js');
+    const fcmSupported = await isSupported();
+    if (!fcmSupported) {
+      document.getElementById('fcmstat').textContent = 'Bu tarayıcı/PWA FCM desteklemiyor';
+      return;
+    }
     const cfg = {
       apiKey:"AIzaSyCU08n2MbhgejPb8exKyvcPKn-xLkBu0sY",
       authDomain:"botelysium-ddf50.firebaseapp.com",
@@ -425,6 +430,22 @@ let messaging = null;
     document.getElementById('fcmstat').textContent = 'Devre dışı';
   }
 })();
+
+function fcmEnvIssue() {
+  if (!window.isSecureContext) return 'HTTPS zorunlu (veya localhost)';
+  if (!('serviceWorker' in navigator)) return 'Service Worker desteklenmiyor';
+  if (!('PushManager' in window)) return 'Push API desteklenmiyor';
+  return '';
+}
+
+function fcmErrorText(err) {
+  const code = err?.code || '';
+  if (code.includes('unsupported-browser')) return 'Tarayıcı FCM desteklemiyor';
+  if (code.includes('permission-blocked') || code.includes('permission-default')) return 'Bildirim izni verilmedi';
+  if (code.includes('token-subscribe-failed')) return 'Push aboneliği başarısız (tarayıcı engeli olabilir)';
+  if (code.includes('failed-service-worker-registration')) return 'Service Worker kaydı hatalı';
+  return err?.message ? ('Hata: ' + err.message) : 'Bilinmeyen hata';
+}
 
 // ══════════════════════════════════════
 // STORAGE
@@ -839,6 +860,10 @@ async function reqNotif() {
     updateNotifStatus();
     return;
   }
+  const envIssue = fcmEnvIssue();
+  if (envIssue) {
+    document.getElementById('fcmstat').textContent = envIssue;
+  }
   const perm = await Notification.requestPermission();
   updateNotifStatus();
   if (perm === 'granted') {
@@ -847,14 +872,25 @@ async function reqNotif() {
     try {
       if (window._fbMessaging) {
         const { getToken, messaging } = window._fbMessaging;
+        const swReg = await navigator.serviceWorker.ready;
         const token = await getToken(messaging, {
-          vapidKey:'BIO3dLGuJCEipJ1v0zHnxoO0iuewsV9ekC_Rsc1bockfBb35l66a9wa6GwWp_kWQoAYscIE5W6dYhSU9KJp7ikg'
+          vapidKey:'BIO3dLGuJCEipJ1v0zHnxoO0iuewsV9ekC_Rsc1bockfBb35l66a9wa6GwWp_kWQoAYscIE5W6dYhSU9KJp7ikg',
+          serviceWorkerRegistration: swReg
         });
+        if (!token) {
+          document.getElementById('fcmstat').textContent = 'Token boş döndü (izin/sunucu kontrol et)';
+          return;
+        }
         S.set('fcm_token', token);
         document.getElementById('fcmstat').textContent = '✓ ' + token.substring(0,20)+'...';
         console.log('FCM TOKEN:', token);
+      } else {
+        document.getElementById('fcmstat').textContent = 'FCM modülü hazır değil';
       }
-    } catch(e) { document.getElementById('fcmstat').textContent = 'Token alınamadı'; }
+    } catch(e) {
+      document.getElementById('fcmstat').textContent = 'Token alınamadı · ' + fcmErrorText(e);
+      console.error('FCM token error:', e);
+    }
   }
 }
 
