@@ -478,6 +478,39 @@ function fcmErrorText(err) {
   return err?.message ? ('Hata: ' + err.message) : 'Bilinmeyen hata';
 }
 
+function setFcmStatusFromCache() {
+  const cached = S.get('fcm_token', '');
+  const el = document.getElementById('fcmstat');
+  if (!el) return;
+  if (cached) el.textContent = '✓ (kayıtlı) ' + cached.substring(0,20) + '...';
+  else el.textContent = 'Token yok';
+}
+
+async function ensureFcmTokenSilently() {
+  if (!('Notification' in window)) return;
+  if (Notification.permission !== 'granted') return;
+  if (firebaseReadyPromise) await firebaseReadyPromise;
+  if (!window._fbMessaging) return;
+  try {
+    const { getToken, messaging } = window._fbMessaging;
+    const swReg = await navigator.serviceWorker.ready;
+    const token = await getToken(messaging, {
+      vapidKey:'BIO3dLGuJCEipJ1v0zHnxoO0iuewsV9ekC_Rsc1bockfBb35l66a9wa6GwWp_kWQoAYscIE5W6dYhSU9KJp7ikg',
+      serviceWorkerRegistration: swReg
+    });
+    if (token) {
+      S.set('fcm_token', token);
+      document.getElementById('fcmstat').textContent = '✓ ' + token.substring(0,20)+'...';
+    }
+  } catch (e) {
+    const cached = S.get('fcm_token', '');
+    if (cached) {
+      document.getElementById('fcmstat').textContent = '✓ (kayıtlı) ' + cached.substring(0,20) + '...';
+    }
+    console.warn('Silent FCM refresh warning:', e);
+  }
+}
+
 function allAlarmItems() {
   const fixed = ALARMS.map(a => ({ ...a, kind:'fixed', aid:String(a.id) }));
   const custom = customAlarms.map(a => ({ ...a, kind:'custom', aid:String(a.id) }));
@@ -619,8 +652,10 @@ window.addEventListener('load', async () => {
   renderToday();
   updateStats();
   updateNotifStatus();
+  setFcmStatusFromCache();
   scheduleAllAlarms();
   scheduleIntervalReminder();
+  ensureFcmTokenSilently();
   setInterval(scheduleAllAlarms, 60 * 60 * 1000); // reschedule every hour
 });
 
