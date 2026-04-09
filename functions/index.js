@@ -33,7 +33,8 @@ exports.dispatchDueAlarms = onSchedule(
     region: 'europe-west1'
   },
   async () => {
-    const snap = await db.collection('devices').get();
+    // Single-device cost mode: only process the most recently updated device.
+    const snap = await db.collection('devices').orderBy('updatedAt', 'desc').limit(1).get();
     if (snap.empty) {
       logger.info('No devices found.');
       return;
