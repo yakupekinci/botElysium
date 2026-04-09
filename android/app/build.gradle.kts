@@ -32,6 +32,22 @@ android {
     kotlinOptions {
         jvmTarget = "17"
     }
+
+    sourceSets {
+        getByName("main").assets.srcDir(layout.buildDirectory.dir("generated/assets"))
+    }
+}
+
+val prepareWebAssets by tasks.registering(Copy::class) {
+    from("${rootDir.parentFile.absolutePath}/index.html")
+    from("${rootDir.parentFile.absolutePath}/sw.js")
+    from("${rootDir.parentFile.absolutePath}/manifest.webmanifest")
+    from("${rootDir.parentFile.absolutePath}/icon.svg")
+    into(layout.buildDirectory.dir("generated/assets"))
+}
+
+tasks.matching { it.name == "preBuild" }.configureEach {
+    dependsOn(prepareWebAssets)
 }
 
 dependencies {

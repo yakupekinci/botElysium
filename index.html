@@ -521,6 +521,19 @@ function allAlarmItems() {
   return fixed.concat(custom);
 }
 
+function scheduleNativeAlarmIfPossible(item) {
+  try {
+    if (!item || !item.on) return;
+    if (window.AndroidBridge && typeof window.AndroidBridge.scheduleAlarm === 'function') {
+      window.AndroidBridge.scheduleAlarm(item.time, item.desc || 'Hatırlatma');
+    }
+  } catch(e) {}
+}
+
+function bootstrapNativeAlarms() {
+  allAlarmItems().forEach(scheduleNativeAlarmIfPossible);
+}
+
 function buildCloudAlarmConfig(token) {
   return {
     token,
@@ -718,6 +731,7 @@ window.addEventListener('load', async () => {
   scheduleIntervalReminder();
   ensureFcmTokenSilently();
   queueCloudSync(2000);
+  bootstrapNativeAlarms();
   setInterval(scheduleAllAlarms, 60 * 60 * 1000); // reschedule every hour
 });
 
@@ -944,6 +958,7 @@ function toggleAlarm(id) {
   document.getElementById('tg'+id).classList.toggle('on', ALARMS[id].on);
   S.set('alarms', ALARMS.map(a=>a.on));
   scheduleAllAlarms();
+  scheduleNativeAlarmIfPossible(ALARMS[id]);
   queueCloudSync();
 }
 
@@ -958,6 +973,7 @@ function addCustomAlarm() {
   document.getElementById('caDesc').value = '';
   renderAlarms();
   scheduleAllAlarms();
+  scheduleNativeAlarmIfPossible(item);
   queueCloudSync();
 }
 
@@ -968,6 +984,7 @@ function toggleCustomAlarm(id) {
   S.set('custom_alarms', customAlarms);
   renderAlarms();
   scheduleAllAlarms();
+  scheduleNativeAlarmIfPossible(item);
   queueCloudSync();
 }
 

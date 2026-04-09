@@ -3,3 +3,4 @@ functions/.firebase/
 functions/.runtimeconfig.json
 firebase-debug.log
 npm-debug.log*
+.idea/
